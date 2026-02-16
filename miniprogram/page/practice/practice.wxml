@@ -1,0 +1,55 @@
+<view class="practice-container">
+  <!-- 1. 顶部进度条 -->
+  <view class="progress-bar-bg">
+    <view class="progress-bar-fill" style="width: {{(currentIndex / totalQuestions) * 100}}%"></view>
+  </view>
+
+  <!-- 2. 顶部和弦方块 -->
+  <view class="chord-blocks-row">
+    <view wx:for="{{progression}}" wx:key="index" class="chord-block {{index === blankIndex ? (pageState === 'correct' ? 'chord-block--correct' : 'chord-block--blank') : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
+      <text wx:if="{{index !== blankIndex}}" class="chord-block-text">{{item}}</text>
+      <text wx:elif="{{pageState === 'correct'}}" class="chord-block-text">{{correctAnswer}}</text>
+    </view>
+  </view>
+
+  <!-- 3. 答题选项 2×2 -->
+  <view class="options-grid">
+    <view wx:for="{{options}}" wx:key="index" class="option-card {{selectedAnswer === item && pageState === 'selected' ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" data-chord="{{item}}" bindtap="onOptionSelect">
+      <text class="option-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 5. 底部按钮 -->
+  <view class="bottom-btn {{pageState === 'correct' ? 'bottom-btn--correct' : ''}} {{(pageState === 'idle' && hasWronged) || pageState === 'wrong' ? 'bottom-btn--retry' : ''}} {{pageState === 'selected' ? 'bottom-btn--confirm' : ''}}" bindtap="{{pageState === 'correct' ? 'onNextTap' : 'onBottomButtonTap'}}">
+    <!-- 默认：波形图标（根音播放） -->
+    <block wx:if="{{pageState === 'idle' && !hasWronged}}">
+      <view class="waveform">
+        <view class="wave-bar wave-bar--short"></view>
+        <view class="wave-bar wave-bar--medium"></view>
+        <view class="wave-bar wave-bar--tall"></view>
+        <view class="wave-bar wave-bar--medium"></view>
+        <view class="wave-bar wave-bar--short"></view>
+        <view class="wave-bar wave-bar--medium"></view>
+        <view class="wave-bar wave-bar--tall"></view>
+        <view class="wave-bar wave-bar--medium"></view>
+        <view class="wave-bar wave-bar--short"></view>
+        <view class="wave-bar wave-bar--medium"></view>
+      </view>
+    </block>
+
+    <!-- 再试试 -->
+    <block wx:elif="{{(pageState === 'idle' && hasWronged) || pageState === 'wrong'}}">
+      <text class="bottom-btn-text">再试试</text>
+    </block>
+
+    <!-- 下一题 -->
+    <block wx:elif="{{pageState === 'correct'}}">
+      <text class="bottom-btn-text">下一题</text>
+    </block>
+
+    <!-- selected 状态：确认 -->
+    <block wx:elif="{{pageState === 'selected'}}">
+      <text class="bottom-btn-text">确认</text>
+    </block>
+  </view>
+</view>

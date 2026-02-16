@@ -1,0 +1,174 @@
+/* Chord Hero - 练习页样式 */
+
+page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.practice-container {
+  background-color: #1C1C1C;
+  height: 100vh;
+  padding: 0 48rpx;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 进度条 */
+.progress-bar-bg {
+  margin-top: 100rpx;
+  height: 20rpx;
+  background-color: #353535;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #FF7A15;
+  border-radius: 10rpx;
+  transition: width 0.3s ease;
+}
+
+/* 顶部和弦方块 */
+.chord-blocks-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22rpx;
+  margin-top: 50rpx;
+}
+
+.chord-block {
+  width: 152rpx;
+  height: 162rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 8rpx 0 rgba(83, 83, 83, 0.35);
+}
+
+.chord-block--filled {
+  background-color: #535353;
+}
+
+.chord-block--blank {
+  background-color: #1C1C1C;
+  border: 4rpx solid #535353;
+  box-shadow: 0 8rpx 0 rgba(83, 83, 83, 0.35);
+}
+
+.chord-block--correct {
+  background-color: #78C04B;
+  border: none;
+  box-shadow: 0 8rpx 0 rgba(120, 192, 75, 0.35);
+}
+
+.chord-block-text {
+  color: #FFFFFF;
+  font-size: 40rpx;
+  font-weight: 600;
+}
+
+/* 答题选项 2×2 */
+.options-grid {
+  display: grid;
+  grid-template-columns: 266rpx 266rpx;
+  justify-content: center;
+  gap: 34rpx 50rpx;
+  margin-top: 50rpx;
+}
+
+.option-card {
+  background-color: #1C1C1C;
+  border: 4rpx solid #535353;
+  border-radius: 20rpx;
+  width: 266rpx;
+  height: 340rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  box-shadow: 0 10rpx 0 rgba(83, 83, 83, 0.35);
+}
+
+.option-card--selected {
+  border-color: #FF7A15;
+  border-width: 4rpx;
+}
+
+.option-card--correct {
+  background-color: #78C04B;
+  border-color: #78C04B;
+  box-shadow: 0 10rpx 0 rgba(120, 192, 75, 0.35);
+}
+
+.option-text {
+  color: #FFFFFF;
+  font-size: 56rpx;
+  font-weight: 700;
+}
+
+/* 底部按钮 */
+.bottom-btn {
+  margin-top: 40rpx;
+  margin-bottom: 50rpx;
+  height: 120rpx;
+  border-radius: 20rpx;
+  background-color: #535353;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 12rpx 0 rgba(83, 83, 83, 0.35);
+}
+
+.bottom-btn--correct {
+  background-color: #78C04B;
+  box-shadow: 0 12rpx 0 rgba(120, 192, 75, 0.35);
+}
+
+.bottom-btn--retry {
+  background-color: transparent;
+  border: 4rpx solid #FF7A15;
+  box-shadow: 0 12rpx 0 rgba(255, 122, 21, 0.25);
+}
+
+.bottom-btn--confirm {
+  background-color: #FF7A15;
+  box-shadow: 0 12rpx 0 rgba(255, 122, 21, 0.35);
+}
+
+.bottom-btn-text {
+  color: #FFFFFF;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+/* 声波图标 */
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.wave-bar {
+  width: 8rpx;
+  background-color: #FFFFFF;
+  border-radius: 4rpx;
+}
+
+.wave-bar--short {
+  height: 24rpx;
+}
+
+.wave-bar--medium {
+  height: 40rpx;
+}
+
+.wave-bar--tall {
+  height: 56rpx;
+}

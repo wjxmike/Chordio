@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "page/practice/practice"
+  ],
+  "window": {
+    "navigationBarTitleText": "Chord Hero",
+    "navigationBarBackgroundColor": "#1C1C1C",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#1C1C1C"
+  },
+  "sitemapLocation": "sitemap.json"
+}
