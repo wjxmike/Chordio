@@ -28,6 +28,14 @@ Page({
   },
 
   onLoad() {
+    // 0. 加载自定义字体（本地文件）
+    wx.loadFontFace({
+      family: 'Protest Strike',
+      source: 'url("/assets/fonts/ProtestStrike.ttf")',
+      success: (res) => console.log('字体加载成功', res),
+      fail: (err) => console.error('字体加载失败', err)
+    });
+
     // 1. 随机生成根音
     const rootNote = chords.randomRootNote();
 
