@@ -12,9 +12,10 @@ Page({
   },
 
   onLoad() {
-    // 记录开始时间，确保启动页最少显示 1.5 秒
+    // 记录开始时间，确保启动页最少显示 2.5 秒（让动画完成）
+    // 动画：0.4s延迟 + 0.6s动画 = 1s，加上一些缓冲时间
     const startTime = Date.now();
-    const minDuration = 1500;
+    const minDuration = 2500;
 
     // 并行加载所有字体
     const fontPromises = [
@@ -28,7 +29,7 @@ Page({
     Promise.all(fontPromises).then(() => {
       console.log('所有字体加载完成');
 
-      // 显示启动页文字
+      // 显示启动页文字（触发动画）
       this.setData({ fontsLoaded: true });
 
       // 计算还需要等待多久
@@ -43,6 +44,11 @@ Page({
 
     // 从本地存储读取 streak
     this.loadStreak();
+  },
+
+  onShow() {
+    // 返回首页时重置选中状态
+    this.setData({ selectedMode: null });
   },
 
   /**
@@ -99,6 +105,8 @@ Page({
         title: '即将上线',
         icon: 'none'
       });
+      // 清除选中状态
+      this.setData({ selectedMode: null });
     }, 200);
   },
 
@@ -114,6 +122,8 @@ Page({
         title: '即将上线',
         icon: 'none'
       });
+      // 清除选中状态
+      this.setData({ selectedMode: null });
     }, 200);
   },
 

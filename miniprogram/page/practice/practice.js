@@ -212,6 +212,7 @@ Page({
    * 页面卸载时清理
    */
   onUnload() {
-    // 可以在这里清理音频资源
+    // 停止当前音频播放
+    audio.stopCurrentPlayback();
   }
 });

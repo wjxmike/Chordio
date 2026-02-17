@@ -49,7 +49,10 @@ page {
   color: #FFFFFF;
   letter-spacing: 3.2rpx;
   text-align: center;
-  transition: opacity 0.3s ease;
+}
+
+.app-name-splash.visible {
+  animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 
 .slogan {
@@ -59,7 +62,22 @@ page {
   letter-spacing: 1.6rpx;
   text-align: center;
   margin-top: 24rpx;
-  transition: opacity 0.3s ease;
+}
+
+.slogan.visible {
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+/* 文字从下向上淡入动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ========== 首页 ========== */
