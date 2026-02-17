@@ -28,10 +28,10 @@ Page({
   },
 
   onLoad() {
-    // 0. 加载自定义字体（本地文件）
+    // 0. 加载自定义字体（云存储）
     wx.loadFontFace({
       family: 'Protest Strike',
-      source: 'url("/assets/fonts/ProtestStrike.ttf")',
+      source: 'url("https://636c-cloudbase-3gk50z3ibc7a8b9f-1391793431.tcb.qcloud.la/fonts/ProtestStrike.ttf")',
       success: (res) => console.log('字体加载成功', res),
       fail: (err) => console.error('字体加载失败', err)
     });
@@ -79,6 +79,7 @@ Page({
     // playing 状态下不允许点击
     if (pageState === 'playing') return;
 
+    this.vibrateShort();
     const index = e.currentTarget.dataset.index;
     const chordSymbol = this.data.progression[index];
     const ctx = audio.getAudioContext();
@@ -93,6 +94,7 @@ Page({
 
     if (pageState === 'selected') {
       // 确认：判题
+      this.vibrateShort();
       if (selectedAnswer === correctAnswer) {
         this.setData({
           pageState: 'correct',
@@ -115,6 +117,7 @@ Page({
 
     if (pageState === 'idle' && !hasWronged) {
       // 播放根音
+      this.vibrateShort();
       const ctx = audio.getAudioContext();
       const rootFreq = audio.getRootFrequency(this.data.rootNote);
       audio.playRootNote(ctx, rootFreq);
@@ -128,6 +131,7 @@ Page({
   onNextTap() {
     if (this.data.pageState !== 'correct') return;
 
+    this.vibrateShort();
     const nextIndex = this.data.currentIndex + 1;
     if (nextIndex >= this.data.totalQuestions) {
       // 练习结束，跳转结果页或弹窗
@@ -174,6 +178,7 @@ Page({
 
     // 选中状态下再次点击同一选项：取消选择，回到 idle
     if (pageState === 'selected' && selected === selectedAnswer) {
+      this.vibrateShort();
       audio.stopCurrentPlayback();
       this.setData({
         selectedAnswer: null,
@@ -183,6 +188,7 @@ Page({
       return;
     }
 
+    this.vibrateShort();
     this.setData({
       selectedAnswer: selected,
       pageState: 'selected'
@@ -191,6 +197,15 @@ Page({
     // 播放所选选项的和弦
     const ctx = audio.getAudioContext();
     audio.playOneChord(ctx, selected, this.data.rootNote);
+  },
+
+  /**
+   * 短震动反馈
+   */
+  vibrateShort() {
+    wx.vibrateShort({
+      type: 'light'
+    });
   },
 
   /**

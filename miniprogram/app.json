@@ -1,9 +1,10 @@
 {
   "pages": [
+    "page/home/home",
     "page/practice/practice"
   ],
   "window": {
-    "navigationBarTitleText": "Chord Hero",
+    "navigationBarTitleText": "Chordio",
     "navigationBarBackgroundColor": "#1C1C1C",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#1C1C1C"

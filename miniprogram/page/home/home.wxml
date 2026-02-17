@@ -1,0 +1,52 @@
+<!-- 启动页 -->
+<view class="splash-container {{showSplash ? 'visible' : 'hidden'}}">
+  <view class="logo-wrapper">
+    <image class="logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
+  </view>
+  <text class="app-name-splash {{fontsLoaded ? 'visible' : 'hidden'}}">Chordio</text>
+  <text class="slogan {{fontsLoaded ? 'visible' : 'hidden'}}">你的听和弦练习伙伴</text>
+</view>
+
+<!-- 首页 -->
+<view class="home-container {{showSplash ? 'hidden' : 'visible'}}">
+  <!-- 顶部标题栏 -->
+  <view class="header">
+    <text class="app-name">Chordio</text>
+    <image class="streak-icon" src="/assets/images/fire-icon.png" mode="aspectFit"></image>
+    <text class="streak-number">{{streak}}</text>
+  </view>
+
+  <!-- 三个模式卡片 -->
+  <view class="cards-container">
+    <!-- Practice Mode -->
+    <view class="mode-card {{selectedMode === 'practice' ? 'mode-card--active' : ''}}" bindtap="onPracticeTap" hover-class="mode-card--hover">
+      <text class="card-title-en">Practice</text>
+      <text class="card-title-cn">练习模式</text>
+    </view>
+
+    <!-- Challenge Mode -->
+    <view class="mode-card {{selectedMode === 'challenge' ? 'mode-card--active' : ''}}" bindtap="onChallengeTap" hover-class="mode-card--hover">
+      <text class="card-title-en">Challenge</text>
+      <text class="card-title-cn">挑战模式</text>
+    </view>
+
+    <!-- Songs Mode -->
+    <view class="mode-card {{selectedMode === 'songs' ? 'mode-card--active' : ''}}" bindtap="onSongsTap" hover-class="mode-card--hover">
+      <text class="card-title-en">Songs</text>
+      <text class="card-title-cn">歌曲模式</text>
+    </view>
+  </view>
+
+  <!-- 底部分割线 -->
+  <view class="divider"></view>
+
+  <!-- 底部导航栏 -->
+  <view class="footer">
+    <view class="nav-btn nav-btn--active" bindtap="onHomeTap">
+      <image class="nav-icon" src="/assets/images/logo.svg" mode="aspectFit"></image>
+    </view>
+    <view class="nav-btn" bindtap="onProfileTap">
+      <image class="nav-icon" src="/assets/images/profile-icon-grey.svg" mode="aspectFit"></image>
+    </view>
+  </view>
+</view>
