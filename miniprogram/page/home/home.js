@@ -87,7 +87,7 @@ Page({
 
     setTimeout(() => {
       wx.navigateTo({
-        url: '/page/practice/practice'
+        url: '/page/level-select/level-select'
       });
     }, 150);
   },

@@ -1,6 +1,7 @@
 {
   "pages": [
     "page/home/home",
+    "page/level-select/level-select",
     "page/practice/practice"
   ],
   "window": {

@@ -1,0 +1,28 @@
+<!-- 关卡选择页 -->
+<view class="level-select-container">
+  <!-- 顶部标题 -->
+  <view class="header">
+    <text class="title">练习模式</text>
+  </view>
+
+  <!-- 关卡卡片列表 -->
+  <view class="level-cards">
+    <view
+      wx:for="{{levels}}"
+      wx:key="id"
+      class="level-card {{item.unlocked ? '' : 'level-card--locked'}}"
+      data-id="{{item.id}}"
+      data-unlocked="{{item.unlocked}}"
+      bindtap="onLevelTap"
+    >
+      <view class="level-badge">Level {{item.level}}</view>
+      <view class="level-info">
+        <text class="level-name">{{item.name}}</text>
+        <text class="level-name-en">{{item.nameEn}}</text>
+      </view>
+      <view wx:if="{{!item.unlocked}}" class="lock-icon">
+        <image src="/assets/images/lock.svg" class="lock-img" mode="aspectFit" />
+      </view>
+    </view>
+  </view>
+</view>
