@@ -19,10 +19,9 @@ Page({
 
     // 并行加载所有字体
     const fontPromises = [
-      this.loadFont('Fredoka One', 'https://636c-cloudbase-3gk50z3ibc7a8b9f-1391793431.tcb.qcloud.la/fonts/FredokaOne-Regular.ttf'),
-      this.loadFont('江城圆体', 'https://636c-cloudbase-3gk50z3ibc7a8b9f-1391793431.tcb.qcloud.la/fonts/JiangChengYuanTi-600W.ttf'),
-      this.loadFont('Protest Strike', 'https://636c-cloudbase-3gk50z3ibc7a8b9f-1391793431.tcb.qcloud.la/fonts/ProtestStrike.ttf'),
-      this.loadFont('江城圆体700', 'https://636c-cloudbase-3gk50z3ibc7a8b9f-1391793431.tcb.qcloud.la/fonts/JiangChengYuanTi-700W.ttf')
+      this.loadFont('Fredoka One', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/FredokaOne-Regular.ttf'),
+      this.loadFont('江城圆体', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets@ed749764/fonts/JiangChengYuanTi-700W.ttf'),
+      this.loadFont('Protest Strike', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/ProtestStrike.ttf')
     ];
 
     // 等待所有字体加载完成

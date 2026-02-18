@@ -28,10 +28,10 @@ Page({
   },
 
   onLoad() {
-    // 0. 加载自定义字体（云存储）
+    // 0. 加载自定义字体（jsDelivr CDN）
     wx.loadFontFace({
       family: 'Protest Strike',
-      source: 'url("https://636c-cloudbase-3gk50z3ibc7a8b9f-1391793431.tcb.qcloud.la/fonts/ProtestStrike.ttf")',
+      source: 'url("https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/ProtestStrike.ttf")',
       success: (res) => console.log('字体加载成功', res),
       fail: (err) => console.error('字体加载失败', err)
     });

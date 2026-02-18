@@ -85,9 +85,10 @@ page {
 }
 
 .chord-block-text {
+  font-family: 'Protest Strike', sans-serif;
   color: #FFFFFF;
   font-size: 40rpx;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 /* 答题选项 2×2 */
@@ -124,9 +125,10 @@ page {
 }
 
 .option-text {
+  font-family: 'Protest Strike', sans-serif;
   color: #FFFFFF;
   font-size: 56rpx;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 /* 底部按钮 */
