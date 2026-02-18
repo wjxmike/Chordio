@@ -76,12 +76,54 @@ Page({
     const rootNote = chords.randomRootNote();
     this.setData({ rootNote });
 
-    // 生成第一题
-    this.generateAndStartQuestion();
+    // 生成第一题数据（界面立即显示）
+    this.generateQuestion();
   },
 
   /**
-   * 生成新题目并开始播放
+   * 页面渲染完成后延迟播放音频
+   */
+  onReady() {
+    setTimeout(() => {
+      this.playCurrentProgression();
+    }, 300);
+  },
+
+  /**
+   * 生成新题目（只生成数据，不播放）
+   */
+  generateQuestion() {
+    const { rootNote, level, progression: prevProgression, blankIndex: prevBlankIndex } = this.data;
+    const q = chords.generateQuestion(rootNote, level, prevProgression, prevBlankIndex);
+
+    this.setData({
+      progression: q.progression,
+      blankIndex: q.blankIndex,
+      correctAnswer: q.correctAnswer,
+      options: q.options,
+      pageState: 'playing',
+      selectedAnswer: null,
+      hasWronged: false,
+      prevProgression: q.progression,
+      prevBlankIndex: q.blankIndex,
+    });
+  },
+
+  /**
+   * 播放当前和弦进行
+   */
+  playCurrentProgression() {
+    const { progression, rootNote, level } = this.data;
+    const ctx = audio.getAudioContext();
+    const duration = audio.playProgression(ctx, progression, rootNote, level);
+
+    setTimeout(() => {
+      this.setData({ pageState: 'idle' });
+    }, duration * 1000);
+  },
+
+  /**
+   * 生成新题目并开始播放（用于下一题）
    */
   generateAndStartQuestion() {
     const { rootNote, level, progression: prevProgression, blankIndex: prevBlankIndex } = this.data;
@@ -95,19 +137,12 @@ Page({
       pageState: 'playing',
       selectedAnswer: null,
       hasWronged: false,
-      // 保存当前走向供下一题使用
       prevProgression: q.progression,
       prevBlankIndex: q.blankIndex,
     });
 
-    // 自动播放整个进行
-    const ctx = audio.getAudioContext();
-    const duration = audio.playProgression(ctx, q.progression, rootNote, level);
-
-    // 播放完成后切换到 idle
-    setTimeout(() => {
-      this.setData({ pageState: 'idle' });
-    }, duration * 1000);
+    // 播放音频
+    this.playCurrentProgression();
   },
 
   /**
