@@ -49,4 +49,9 @@
       <image class="nav-icon" src="/assets/images/profile-icon-grey.svg" mode="aspectFit"></image>
     </view>
   </view>
+
+  <!-- 测试入口（暂时隐藏） -->
+  <!-- <view class="test-entry" bindtap="onAudioTestTap">
+    <text class="test-entry-text">音频测试</text>
+  </view> -->
 </view>

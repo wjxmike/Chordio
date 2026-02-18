@@ -145,6 +145,15 @@ Page({
   },
 
   /**
+   * 点击音频测试
+   */
+  onAudioTestTap() {
+    wx.navigateTo({
+      url: '/page/audio-test/audio-test'
+    });
+  },
+
+  /**
    * 短震动反馈
    */
   vibrateShort() {

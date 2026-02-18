@@ -1,0 +1,90 @@
+<view class="container">
+  <view class="header">
+    <text class="title">Web Audio 真机测试</text>
+    <text class="subtitle">诊断音频播放问题</text>
+  </view>
+
+  <!-- 状态面板 -->
+  <view class="status-panel">
+    <view class="status-row">
+      <text class="label">上下文状态:</text>
+      <text class="value {{ctxState === 'running' ? 'success' : ctxState === 'suspended' ? 'warning' : ''}}">{{ctxState}}</text>
+    </view>
+    <view class="status-row">
+      <text class="label">采样率:</text>
+      <text class="value">{{ctxSampleRate}}</text>
+    </view>
+    <view class="status-row">
+      <text class="label">当前时间:</text>
+      <text class="value">{{ctxCurrentTime}}</text>
+    </view>
+    <view class="status-row">
+      <text class="label">采样加载:</text>
+      <text class="value">{{samplesLoaded}}/{{samplesTotal}}</text>
+    </view>
+    <view class="status-row">
+      <text class="label">播放状态:</text>
+      <text class="value {{isPlaying ? 'playing' : ''}}">{{isPlaying ? '播放中...' : '空闲'}}</text>
+    </view>
+  </view>
+
+  <!-- 基础测试 -->
+  <view class="section">
+    <text class="section-title">基础测试</text>
+    <view class="btn-group">
+      <button class="btn" bindtap="createCtx">1. 创建上下文</button>
+      <button class="btn" bindtap="checkCtxState">2. 检查状态</button>
+      <button class="btn" bindtap="resumeCtx">3. 恢复上下文</button>
+    </view>
+  </view>
+
+  <!-- 振荡器测试 -->
+  <view class="section">
+    <text class="section-title">振荡器测试（纯音）</text>
+    <view class="btn-group">
+      <button class="btn warning" bindtap="testPlayBeforeInteraction">测试1: 直接播放440Hz</button>
+      <button class="btn" bindtap="testPlayAfterInteraction">测试2: 点击后播放660Hz</button>
+    </view>
+  </view>
+
+  <!-- 采样测试 -->
+  <view class="section">
+    <text class="section-title">采样测试</text>
+    <view class="btn-group">
+      <button class="btn" bindtap="testLoadAndPlaySample">测试3: 加载网络采样</button>
+      <button class="btn" bindtap="testInnerAudio">测试3b: InnerAudio下载播放</button>
+      <button class="btn" bindtap="testInnerAudioCloud">测试3c: InnerAudio云路径</button>
+      <button class="btn" bindtap="testPreloadPianoSamples">测试4: 预加载钢琴采样</button>
+      <button class="btn" bindtap="testPlayPianoSample">测试5: 播放钢琴采样</button>
+    </view>
+  </view>
+
+  <!-- 同步/延迟测试 -->
+  <view class="section">
+    <text class="section-title">同步/延迟测试</text>
+    <view class="btn-group">
+      <button class="btn" bindtap="testPlayChord">测试6: 和弦（同时播放）</button>
+      <button class="btn" bindtap="testSequentialPlay">测试7: 序列（连续播放）</button>
+    </view>
+  </view>
+
+  <!-- 一键测试 -->
+  <view class="section">
+    <text class="section-title">快速测试</text>
+    <view class="btn-group">
+      <button class="btn primary" bindtap="runAllTests">运行所有基础测试</button>
+      <button class="btn danger" bindtap="clearLogs">清除日志</button>
+      <button class="btn success" bindtap="copyLogs">复制日志</button>
+    </view>
+  </view>
+
+  <!-- 日志面板 -->
+  <view class="log-panel">
+    <text class="log-title">调试日志</text>
+    <scroll-view class="log-scroll" scroll-y="true" scroll-into-view="{{logs.length > 0 ? 'log-' + (logs.length - 1) : ''}}">
+      <view wx:for="{{logs}}" wx:key="index" id="log-{{index}}" class="log-item {{item.type}}">
+        <text>{{item.msg}}</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

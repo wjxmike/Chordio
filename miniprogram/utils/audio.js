@@ -1,6 +1,6 @@
 /**
  * Chord Hero - 钢琴音频播放模块
- * 使用 Web Audio API + downloadFile 缓存实现低延迟播放
+ * 使用 Web Audio API + wx.cloud.downloadFile 实现低延迟播放
  */
 
 const { getChordFrequencies, ROOT_FREQUENCIES } = require('./chords');
@@ -27,13 +27,6 @@ const CLOUD_BASE = 'cloud://cloudbase-3gk50z3ibc7a8b9f.636c-cloudbase-3gk50z3ibc
  */
 function getSampleUrl(noteName, octave) {
   return `${CLOUD_BASE}/${noteName}${octave}.m4a`;
-}
-
-/**
- * 获取本地缓存路径
- */
-function getLocalPath(noteName, octave) {
-  return `${CACHE_DIR}/${noteName}${octave}.m4a`;
 }
 
 /**
@@ -72,85 +65,36 @@ function ensureAudioResumed() {
 }
 
 /**
- * 确保缓存目录存在
- */
-function ensureCacheDir() {
-  return new Promise((resolve) => {
-    const fs = wx.getFileSystemManager();
-    try {
-      fs.accessSync(CACHE_DIR);
-      resolve();
-    } catch (e) {
-      // 目录不存在，创建它
-      try {
-        fs.mkdirSync(CACHE_DIR, true);
-        console.log('Cache dir created:', CACHE_DIR);
-        resolve();
-      } catch (err) {
-        console.warn('Failed to create cache dir:', err);
-        resolve();
-      }
-    }
-  });
-}
-
-/**
- * 检查本地缓存是否存在
- */
-function hasLocalCache(noteName, octave) {
-  const localPath = getLocalPath(noteName, octave);
-  try {
-    wx.getFileSystemManager().accessSync(localPath);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
- * 加载单个音频采样
+ * 加载单个音频采样（使用 wx.cloud.downloadFile）
  */
 function loadSample(noteName, octave) {
   const key = `${noteName}${octave}`;
   const cloudPath = getSampleUrl(noteName, octave);
 
-  console.log(`[loadSample] Start: ${key}, cloudPath: ${cloudPath}`);
+  console.log(`[loadSample] Start: ${key}`);
 
   return new Promise((resolve) => {
-    // 先获取临时下载链接
-    wx.cloud.getTempFileURL({
-      fileList: [cloudPath],
+    // 使用 wx.cloud.downloadFile 下载（不受域名白名单限制）
+    wx.cloud.downloadFile({
+      fileID: cloudPath,
       success: (res) => {
-        console.log(`[loadSample] getTempFileURL success:`, res);
-        if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-          const httpUrl = res.fileList[0].tempFileURL;
-          console.log(`[loadSample] Got temp URL: ${httpUrl}`);
+        console.log(`[loadSample] Download success: ${key}, tempPath: ${res.tempFilePath}`);
 
-          // 用临时 URL 请求音频数据
-          wx.request({
-            url: httpUrl,
-            responseType: 'arraybuffer',
-            success: (reqRes) => {
-              console.log(`[loadSample] Request success: ${key}, status: ${reqRes.statusCode}, size: ${reqRes.data?.byteLength}`);
-              if (reqRes.statusCode === 200 && reqRes.data) {
-                decodeAndCache(key, reqRes.data, resolve);
-              } else {
-                console.warn(`[loadSample] Bad response: ${key}, status: ${reqRes.statusCode}`);
-                resolve();
-              }
-            },
-            fail: (err) => {
-              console.warn(`[loadSample] Request failed: ${key}`, err);
-              resolve();
-            }
-          });
-        } else {
-          console.warn(`[loadSample] No tempFileURL in response:`, res);
-          resolve();
-        }
+        // 读取文件为 ArrayBuffer
+        wx.getFileSystemManager().readFile({
+          filePath: res.tempFilePath,
+          success: (fileRes) => {
+            console.log(`[loadSample] Read success: ${key}, size: ${fileRes.data.byteLength}`);
+            decodeAndCache(key, fileRes.data, resolve);
+          },
+          fail: (err) => {
+            console.warn(`[loadSample] Read failed: ${key}`, err);
+            resolve();
+          }
+        });
       },
       fail: (err) => {
-        console.warn(`[loadSample] getTempFileURL failed: ${key}`, err);
+        console.warn(`[loadSample] Download failed: ${key}`, err);
         resolve();
       }
     });
@@ -180,8 +124,7 @@ async function preloadSamples() {
   if (samplesLoaded) return;
   if (loadPromise) return loadPromise;
 
-  const ctx = getAudioContext();
-  await ensureCacheDir();
+  getAudioContext();
 
   const notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
   const octaves = [2, 3, 4, 5];

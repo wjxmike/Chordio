@@ -199,3 +199,18 @@ page {
   width: 56rpx;
   height: 78rpx;
 }
+
+/* 测试入口 */
+.test-entry {
+  position: fixed;
+  bottom: 20rpx;
+  right: 20rpx;
+  padding: 10rpx 20rpx;
+  background: rgba(255, 122, 21, 0.8);
+  border-radius: 20rpx;
+}
+
+.test-entry-text {
+  font-size: 24rpx;
+  color: #fff;
+}
