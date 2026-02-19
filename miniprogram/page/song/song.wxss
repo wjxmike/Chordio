@@ -54,14 +54,15 @@ page {
   height: 220rpx;
   border: 5rpx solid #535353;
   border-radius: 16rpx;
-  padding: 12rpx;
+  padding-right: 12rpx;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .song-cover {
-  width: 180rpx;
-  height: 186rpx;
-  border-radius: 12rpx;
+  width: 210rpx;
+  height: 215rpx;
+  border-radius: 11rpx 12rpx 12rpx 11rpx;
   flex-shrink: 0;
 }
 
@@ -113,13 +114,20 @@ page {
 
 /* 歌曲播放进度条（细条） */
 .song-progress-bar {
-  margin-top: 0rpx;
+  margin-top: -16rpx;
+  margin-bottom: -16rpx;
+  padding: 16rpx 0;
+  margin-left: 10rpx;
+  margin-right: 10rpx;
+  position: relative;
+}
+
+.song-progress-track {
   height: 8rpx;
   background-color: #353535;
   border-radius: 6rpx;
-  margin-left: 10rpx;
-  margin-right: 10rpx;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
 }
 
 .song-progress-fill {
@@ -127,6 +135,24 @@ page {
   background-color: #FF7A15;
   border-radius: 6rpx;
   transition: width 0.1s linear;
+}
+
+.song-progress-handle {
+  position: absolute;
+  top: 50%;
+  width: 24rpx;
+  height: 24rpx;
+  background-color: #FF7A15;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.song-progress-handle--visible {
+  opacity: 1;
 }
 
 /* 和弦方块 */
