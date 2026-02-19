@@ -4,6 +4,7 @@
     "page/level-select/level-select",
     "page/practice/practice",
     "page/challenge/challenge",
+    "page/song/song",
     "page/audio-test/audio-test"
   ],
   "window": {

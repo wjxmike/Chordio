@@ -1,0 +1,61 @@
+<view class="song-container">
+  <!-- 顶部：练习进度条 + 题号 -->
+  <view class="header-row">
+    <view class="practice-progress-bar">
+      <view class="practice-progress-fill" style="width: {{(currentIndex + 1) / totalQuestions * 100}}%"></view>
+    </view>
+    <text class="question-number">{{currentIndex + 1}}/{{totalQuestions}}</text>
+  </view>
+
+  <!-- 歌曲卡片 -->
+  <view class="song-card">
+    <image class="song-cover" src="{{song.cover}}" mode="aspectFill"></image>
+    <view class="song-info">
+      <text class="song-title">{{song.title}}</text>
+      <text class="song-artist">{{song.artist}} 《{{song.album}}》</text>
+    </view>
+    <view class="play-btn {{isPlaying ? 'play-btn--playing' : ''}}" bindtap="toggleSongPlay">
+      <image class="play-icon" src="/assets/images/{{isPlaying ? 'pause' : 'play'}}.svg" mode="aspectFit"></image>
+    </view>
+  </view>
+
+  <!-- 歌曲播放进度条 -->
+  <view class="song-progress-bar" bindtouchstart="onProgressTouchStart" bindtouchmove="onProgressTouchMove" bindtouchend="onProgressTouchEnd">
+    <view class="song-progress-track">
+      <view class="song-progress-fill" style="width: {{songProgress}}%"></view>
+      <view class="song-progress-handle {{isDragging ? 'song-progress-handle--visible' : ''}}" style="left: {{songProgress}}%"></view>
+    </view>
+  </view>
+
+  <!-- 和弦方块（动态数量） -->
+  <view class="chord-blocks-row chord-blocks-row--{{progression.length}}">
+    <view wx:for="{{progression}}" wx:key="index" class="chord-block {{item.isBlank ? (pageState === 'correct' ? 'chord-block--correct' : (pageState === 'wrong' ? 'chord-block--wrong' : 'chord-block--blank')) : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
+      <text wx:if="{{!item.isBlank}}" class="chord-block-text">{{item.symbol}}</text>
+      <text wx:elif="{{pageState === 'correct'}}" class="chord-block-text">{{item.answer}}</text>
+      <text wx:elif="{{pageState === 'selected' && selectedAnswer}}" class="chord-block-text">{{selectedAnswer}}</text>
+    </view>
+  </view>
+
+  <!-- 答题选项 2×2 -->
+  <view class="options-grid">
+    <view wx:for="{{options}}" wx:key="index" class="option-card {{flashingIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" hover-class="{{pageState === 'playing' || pageState === 'correct' || pageState === 'wrong' ? '' : 'option-card--hover'}}" hover-stay-time="100" data-index="{{index}}" bindtap="onOptionSelect">
+      <text class="option-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 底部按钮：根音/确认/下一题 -->
+  <view class="bottom-btn {{pageState === 'correct' ? 'bottom-btn--correct' : ''}} {{pageState === 'selected' ? 'bottom-btn--confirm' : ''}} {{pageState === 'wrong' ? 'bottom-btn--wrong' : ''}}" bindtap="{{pageState === 'correct' ? 'onNextQuestion' : 'onBottomButtonTap'}}">
+    <block wx:if="{{pageState === 'idle'}}">
+      <text class="root-note-text">{{rootNote}}</text>
+    </block>
+    <block wx:elif="{{pageState === 'selected'}}">
+      <text class="bottom-btn-text">确认</text>
+    </block>
+    <block wx:elif="{{pageState === 'wrong'}}">
+      <text class="bottom-btn-text">再试试</text>
+    </block>
+    <block wx:else>
+      <text class="bottom-btn-text">下一题</text>
+    </block>
+  </view>
+</view>

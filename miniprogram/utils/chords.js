@@ -272,6 +272,30 @@ function getChromaticFreqs(rootNote, chordSymbol) {
     }
   }
 
+  // III7 - III 级属七（等同于 V7/vi）
+  if (chordSymbol === 'III7') {
+    // 在 C 大调中，III7 = G7 (来自平行小调或 V7/vi)
+    // vi 的 V = vi 上方 7 个半音
+    const viSemitone = majorScale[5];
+    const rootOfV = (viSemitone + 7) % 12;
+    const rootName = SEMITONE_ORDER[rootOfV];
+    const dominantScale = getMixolydianScale(rootName);
+    return getChordFreqsFromScale([0, 2, 4, 6], dominantScale);
+  }
+
+  // #V - 升五级大三和弦
+  if (chordSymbol === '#V') {
+    // 升五级 = V 级 + 1 个半音
+    const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+    const sharpVSemitone = (rootIndex + 8) % 12;  // V = 7, #V = 8
+    // 大三和弦 = 根音 + 大三度 + 纯五度
+    return [
+      semitoneToFreq(sharpVSemitone),
+      semitoneToFreq((sharpVSemitone + 4) % 12),
+      semitoneToFreq((sharpVSemitone + 7) % 12)
+    ];
+  }
+
   return null;
 }
 
@@ -346,7 +370,8 @@ function getAvailableChords(level) {
     case 'chromatic':
       return ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii',
               'V7/vi', 'V7/V', 'V7/IV', 'V7/ii',
-              'iv', 'bVI', 'bVII', 'III', 'II'];
+              'iv', 'bVI', 'bVII', 'III', 'II',
+              'III7', '#V'];
     default:
       return ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'];
   }

@@ -114,13 +114,10 @@ Page({
     this.setData({ selectedMode: 'songs' });
 
     setTimeout(() => {
-      wx.showToast({
-        title: '即将上线',
-        icon: 'none'
+      wx.navigateTo({
+        url: '/page/song/song'
       });
-      // 清除选中状态
-      this.setData({ selectedMode: null });
-    }, 200);
+    }, 150);
   },
 
   /**

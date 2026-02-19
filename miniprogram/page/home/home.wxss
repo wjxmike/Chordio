@@ -94,7 +94,7 @@ page {
 .header {
   display: flex;
   align-items: center;
-  margin-top: 100rpx;
+  margin-top: 106rpx;
   margin-left: 42rpx;
   gap: 8rpx;
 }
@@ -127,7 +127,7 @@ page {
   align-items: center;
   justify-content: flex-start;
   gap: 40rpx;
-  padding-top: 30rpx;
+  padding-top: 45rpx;
 }
 
 /* 模式卡片 */
