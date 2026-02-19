@@ -191,6 +191,15 @@ function getLydianScale(rootNote) {
 }
 
 /**
+ * 获取多里安调式 (Dorian)
+ */
+function getDorianScale(rootNote) {
+  const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+  // 1-2-b3-4-5-6-b7 = 0,2,3,5,7,9,10
+  return [0, 2, 3, 5, 7, 9, 10].map(i => (rootIndex + i) % 12);
+}
+
+/**
  * 获取离调和弦频率
  * 支持副属和弦、借调和弦等
  */
@@ -296,6 +305,63 @@ function getChromaticFreqs(rootNote, chordSymbol) {
     ];
   }
 
+  // I7 - I 级属七和弦（Mixolydian 调式）
+  if (chordSymbol === 'I7') {
+    const mixolydianScale = getMixolydianScale(rootNote);
+    return getChordFreqsFromScale([0, 2, 4, 6], mixolydianScale);
+  }
+
+  // v-7 - V 级小七和弦（来自 Dorian 调式）
+  if (chordSymbol === 'v-7') {
+    const dorianScale = getDorianScale(rootNote);
+    return getChordFreqsFromScale([0, 2, 4, 6], dorianScale);
+  }
+
+  // ===== 小调和弦（小调调性）=====
+  // 这些和弦需要小调根音
+
+  // i - 小调主和弦（小三和弦）
+  if (chordSymbol === 'i') {
+    return getChordFreqsFromScale([0, 2, 4], minorScale);
+  }
+
+  // VI - 小调 VI 级大三和弦（关系大调主和弦）
+  if (chordSymbol === 'VI') {
+    return getChordFreqsFromScale([5, 7, 9], minorScale);
+  }
+
+  // III - 小调 III 级大三和弦
+  if (chordSymbol === 'III') {
+    return getChordFreqsFromScale([2, 4, 6], minorScale);
+  }
+
+  // V - 小调 V 级大三和弦（和声小调）
+  if (chordSymbol === 'V' && !borrowedMap['V']) {
+    // 和声小调的 V 级是大三和弦
+    const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+    const vSemitone = (rootIndex + 7) % 12;
+    return [
+      semitoneToFreq(vSemitone),
+      semitoneToFreq((vSemitone + 4) % 12),
+      semitoneToFreq((vSemitone + 7) % 12)
+    ];
+  }
+
+  // V7 - 小调 V 级属七和弦（和声小调）
+  if (chordSymbol === 'V7') {
+    // 使用和声小调的属七
+    const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+    const vSemitone = (rootIndex + 7) % 12;
+    const vName = SEMITONE_ORDER[vSemitone];
+    const dominantScale = getMixolydianScale(vName);
+    return getChordFreqsFromScale([0, 2, 4, 6], dominantScale);
+  }
+
+  // VII - 小调 VII 级大三和弦
+  if (chordSymbol === 'VII') {
+    return getChordFreqsFromScale([6, 8, 10], minorScale);
+  }
+
   return null;
 }
 
@@ -369,9 +435,10 @@ function getAvailableChords(level) {
       return ['I△7', 'ii-7', 'iii-7', 'IV△7', 'V7', 'vi-7', 'viiØ7'];
     case 'chromatic':
       return ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii',
-              'V7/vi', 'V7/V', 'V7/IV', 'V7/ii',
-              'iv', 'bVI', 'bVII', 'III', 'II',
-              'III7', '#V'];
+              'I△7', 'ii-7', 'iii-7', 'IV△7', 'V7', 'vi-7',
+              'I7', 'v-7', 'III7', '#V',
+              'iv', 'bVI', 'bVII', 'III', 'II', 'VI', 'VII',
+              'i', 'V7'];
     default:
       return ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'];
   }
@@ -509,6 +576,73 @@ function getChordFrequencies(rootNote, chordSymbol, level) {
   }
 }
 
+// ==================== 和弦符号格式化 ====================
+
+/**
+ * 格式化和弦符号为带 HTML 上标的字符串
+ * @param {string} symbol 原始和弦符号
+ * @returns {string} 格式化后的字符串
+ */
+function formatChordSymbol(symbol) {
+  // 大七和弦: I△7 → I<sup>M7</sup>
+  if (symbol.includes('△7')) {
+    return symbol.replace('△7', '<sup>M7</sup>');
+  }
+
+  // 半减七和弦: viiØ7 → vii<sup>ø7</sup>
+  if (symbol.includes('Ø7')) {
+    return symbol.replace('Ø7', '<sup>ø7</sup>');
+  }
+
+  // 小七和弦: ii-7, v-7 → 上标7
+  if (symbol.includes('-7')) {
+    return symbol.replace('-7', '<sup>7</sup>');
+  }
+
+  // 减三和弦: vii → vii° (添加°号，不上标)
+  if (symbol === 'vii') {
+    return 'vii°';
+  }
+
+  // 属七和弦: 匹配末尾的7
+  // V7, I7, III7, iv7 等
+  const domMatch = symbol.match(/^(.+)(7)$/);
+  if (domMatch && !symbol.includes('<sup>')) {
+    return domMatch[1] + '<sup>7</sup>';
+  }
+
+  return symbol;
+}
+
+/**
+ * 将和弦符号转为 rich-text nodes
+ * @param {string} symbol 原始和弦符号
+ * @returns {string|Array} rich-text 可用的 nodes
+ */
+function getChordNodes(symbol) {
+  const formatted = formatChordSymbol(symbol);
+
+  // 如果没有 sup 标签，直接返回原字符串
+  if (!formatted.includes('<sup>')) {
+    return formatted;
+  }
+
+  // 解析为节点数组
+  const match = formatted.match(/^(.+?)<sup>(.+?)<\/sup>(.*)$/);
+  if (!match) return formatted;
+
+  const nodes = [
+    { type: 'text', text: match[1] },
+    { name: 'sup', attrs: {}, children: [{ type: 'text', text: match[2] }] }
+  ];
+
+  if (match[3]) {
+    nodes.push({ type: 'text', text: match[3] });
+  }
+
+  return nodes;
+}
+
 module.exports = {
   ROOT_NOTES,
   ROOT_FREQUENCIES,
@@ -519,5 +653,7 @@ module.exports = {
   generateQuestion,
   getChordFrequencies,
   getChordData,
-  getAvailableChords
+  getAvailableChords,
+  formatChordSymbol,
+  getChordNodes
 };

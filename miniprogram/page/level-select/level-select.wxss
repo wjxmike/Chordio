@@ -13,22 +13,40 @@ page {
   box-sizing: border-box;
 }
 
-/* 顶部标题 */
-.header {
+/* 顶部导航栏 */
+.nav-bar {
+  display: flex;
+  align-items: center;
   padding-top: 100rpx;
-  text-align: center;
+  height: 88rpx;
 }
 
-.title {
+.back-btn {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
   font-family: '江城圆体', sans-serif;
   font-size: 48rpx;
   color: #FFFFFF;
   letter-spacing: 2.4rpx;
+  margin-right: 48rpx;
 }
 
 /* 关卡卡片列表 */
 .level-cards {
-  margin-top: 68rpx;
+  margin-top: 35rpx;
   display: flex;
   flex-direction: column;
   gap: 36rpx;

@@ -1,0 +1,52 @@
+/**
+ * 和弦符号格式化 WXS 模块
+ * 用于在模板中显示带上标的和弦符号
+ */
+
+/**
+ * 格式化和弦符号
+ */
+function formatChord(symbol) {
+  if (!symbol) return '';
+
+  // 大七和弦: I△7 → I<sup>M7</sup>
+  if (symbol.indexOf('△7') > -1) {
+    return symbol.replace('△7', '<sup>M7</sup>');
+  }
+
+  // 半减七和弦: viiØ7 → vii<sup>ø7</sup>
+  if (symbol.indexOf('Ø7') > -1) {
+    return symbol.replace('Ø7', '<sup>ø7</sup>');
+  }
+
+  // 小七和弦: ii-7, v-7 → 上标7
+  if (symbol.indexOf('-7') > -1) {
+    return symbol.replace('-7', '<sup>7</sup>');
+  }
+
+  // 减三和弦: vii → vii°
+  if (symbol === 'vii') {
+    return 'vii°';
+  }
+
+  // 属七和弦: 匹配末尾的7
+  if (symbol.length > 1 && symbol.charAt(symbol.length - 1) === '7') {
+    var base = symbol.substring(0, symbol.length - 1);
+    return base + '<sup>7</sup>';
+  }
+
+  return symbol;
+}
+
+/**
+ * 获取 rich-text nodes
+ * 返回 HTML 字符串（rich-text 直接支持）
+ */
+function getNodes(symbol) {
+  return formatChord(symbol);
+}
+
+module.exports = {
+  formatChord: formatChord,
+  getNodes: getNodes
+};

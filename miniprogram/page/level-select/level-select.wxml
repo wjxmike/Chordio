@@ -1,8 +1,11 @@
 <!-- 关卡选择页 -->
 <view class="level-select-container">
-  <!-- 顶部标题 -->
-  <view class="header">
-    <text class="title">练习模式</text>
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="back-btn" bindtap="onBackTap">
+      <image class="back-icon" src="/assets/images/back.svg" mode="aspectFit" />
+    </view>
+    <text class="nav-title">练习模式</text>
   </view>
 
   <!-- 关卡卡片列表 -->

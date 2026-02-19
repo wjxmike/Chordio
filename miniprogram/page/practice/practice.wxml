@@ -1,3 +1,4 @@
+<wxs src="../../utils/chord-format.wxs" module="chordFmt" />
 <view class="practice-container">
   <!-- 0. 进度行：进度条 + 题目计数 -->
   <view class="progress-row">
@@ -10,16 +11,16 @@
   <!-- 2. 顶部和弦方块 -->
   <view class="chord-blocks-row">
     <view wx:for="{{progression}}" wx:key="index" class="chord-block {{index === blankIndex ? (pageState === 'correct' ? 'chord-block--correct' : 'chord-block--blank') : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
-      <text wx:if="{{index !== blankIndex}}" class="chord-block-text">{{item}}</text>
-      <text wx:elif="{{pageState === 'correct'}}" class="chord-block-text">{{correctAnswer}}</text>
-      <text wx:elif="{{pageState === 'selected'}}" class="chord-block-text">{{selectedAnswer}}</text>
+      <rich-text wx:if="{{index !== blankIndex}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item)}}"></rich-text>
+      <rich-text wx:elif="{{pageState === 'correct'}}" class="chord-block-text" nodes="{{chordFmt.getNodes(correctAnswer)}}"></rich-text>
+      <rich-text wx:elif="{{pageState === 'selected'}}" class="chord-block-text" nodes="{{chordFmt.getNodes(selectedAnswer)}}"></rich-text>
     </view>
   </view>
 
   <!-- 3. 答题选项 2×2 -->
   <view class="options-grid">
     <view wx:for="{{options}}" wx:key="index" class="option-card {{flashingIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" hover-class="{{pageState === 'playing' ? '' : 'option-card--hover'}}" hover-stay-time="100" data-chord="{{item}}" data-index="{{index}}" bindtap="onOptionSelect">
-      <text class="option-text">{{item}}</text>
+      <rich-text class="option-text" nodes="{{chordFmt.getNodes(item)}}"></rich-text>
     </view>
   </view>
 

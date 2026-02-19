@@ -75,6 +75,8 @@ Page({
       prevBlankIndex: -1
     });
 
+    // 绑定和弦格式化函数供模板使用
+    this.getChordNodes = chords.getChordNodes;
     // 设置导航栏标题
     wx.setNavigationBarTitle({
       title: levelName + '练习'

@@ -1,4 +1,8 @@
+<wxs src="../../utils/chord-format.wxs" module="chordFmt" />
 <view class="song-container">
+  <!-- 预加载下一首封面（隐藏） -->
+  <image hidden src="{{preloadCover}}" mode="aspectFill" style="width:1px;height:1px;"></image>
+
   <!-- 顶部：练习进度条 + 题号 -->
   <view class="header-row">
     <view class="practice-progress-bar">
@@ -30,16 +34,16 @@
   <!-- 和弦方块（动态数量） -->
   <view class="chord-blocks-row chord-blocks-row--{{progression.length}}">
     <view wx:for="{{progression}}" wx:key="index" class="chord-block {{item.isBlank ? (pageState === 'correct' ? 'chord-block--correct' : (pageState === 'wrong' ? 'chord-block--wrong' : 'chord-block--blank')) : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
-      <text wx:if="{{!item.isBlank}}" class="chord-block-text">{{item.symbol}}</text>
-      <text wx:elif="{{pageState === 'correct'}}" class="chord-block-text">{{item.answer}}</text>
-      <text wx:elif="{{pageState === 'selected' && selectedAnswer}}" class="chord-block-text">{{selectedAnswer}}</text>
+      <rich-text wx:if="{{!item.isBlank}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.symbol)}}"></rich-text>
+      <rich-text wx:elif="{{pageState === 'correct'}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.answer)}}"></rich-text>
+      <rich-text wx:elif="{{pageState === 'selected' && selectedAnswer}}" class="chord-block-text" nodes="{{chordFmt.getNodes(selectedAnswer)}}"></rich-text>
     </view>
   </view>
 
   <!-- 答题选项 2×2 -->
   <view class="options-grid">
     <view wx:for="{{options}}" wx:key="index" class="option-card {{flashingIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" hover-class="{{pageState === 'playing' || pageState === 'correct' || pageState === 'wrong' ? '' : 'option-card--hover'}}" hover-stay-time="100" data-index="{{index}}" bindtap="onOptionSelect">
-      <text class="option-text">{{item}}</text>
+      <rich-text class="option-text" nodes="{{chordFmt.getNodes(item)}}"></rich-text>
     </view>
   </view>
 

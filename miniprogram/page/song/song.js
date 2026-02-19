@@ -29,6 +29,7 @@ Page({
     songProgress: 0,      // 0-100
     isDragging: false,    // 是否正在拖动进度条
     _wasPlayingBeforeDrag: false,  // 拖动前是否在播放
+    shouldAutoPlay: false,  // 是否需要自动播放（等待 onCanplay）
 
     // 用户交互状态
     pageState: 'idle',    // 'idle' | 'playing' | 'selected' | 'correct' | 'wrong'
@@ -37,6 +38,9 @@ Page({
 
     // 统计
     correctCount: 0,
+
+    // 预加载
+    preloadCover: '',  // 下一首歌曲封面
   },
 
   // InnerAudio 实例
@@ -65,6 +69,9 @@ Page({
       fail: (err) => console.error('江城圆体 加载失败', err)
     });
 
+    // 绑定和弦格式化函数供模板使用
+    this.getChordNodes = chords.getChordNodes;
+
     // 初始化 InnerAudio
     this._songAudio = wx.createInnerAudioContext();
     this._songAudio.onEnded(() => {
@@ -72,22 +79,61 @@ Page({
     });
     this._songAudio.onError((err) => {
       console.error('歌曲播放错误:', err);
-      this.setData({ isPlaying: false });
+      this.setData({ isPlaying: false, shouldAutoPlay: false });
+    });
+    this._songAudio.onCanplay(() => {
+      // 音频准备好后，如果需要自动播放则播放
+      if (this.data.shouldAutoPlay) {
+        this._songAudio.play();
+        this.setData({ isPlaying: true, shouldAutoPlay: false, pageState: 'idle' });
+
+        // 启动进度更新
+        this._updateProgressTimer = setInterval(() => {
+          if (this._songAudio.duration > 0) {
+            const progress = (this._songAudio.currentTime / this._songAudio.duration) * 100;
+            this.setData({ songProgress: Math.min(progress, 100) });
+          }
+        }, 100);
+      }
     });
 
-    // 打乱题目顺序
-    this._shuffledQuestions = this.shuffleArray(songs.getAllQuestions());
+    // 选择题目：最多10题，每首歌只出现一次
+    this._shuffledQuestions = this.selectUniqueSongQuestions(10);
     this.setData({ totalQuestions: this._shuffledQuestions.length });
 
     // 生成第一题
     this.generateQuestion();
   },
 
+  /**
+   * 选择题目，确保每首歌只出现一次
+   * @param {number} maxQuestions 最多题目数量
+   */
+  selectUniqueSongQuestions(maxQuestions) {
+    const allQuestions = songs.getAllQuestions();
+    const usedSongs = new Set();
+    const selected = [];
+
+    // 先打乱所有题目
+    const shuffled = this.shuffleArray([...allQuestions]);
+
+    // 按顺序选择，跳过已选过的歌曲
+    for (const q of shuffled) {
+      if (!usedSongs.has(q.songId)) {
+        selected.push(q);
+        usedSongs.add(q.songId);
+        if (selected.length >= maxQuestions) break;
+      }
+    }
+
+    // 再次打乱选中题目的顺序
+    return this.shuffleArray(selected);
+  },
+
   onReady() {
-    // 延迟播放歌曲片段
-    setTimeout(() => {
-      this.playSongAudio();
-    }, 300);
+    // 页面准备好后播放歌曲片段
+    // 播放由 onCanplay 事件驱动，无需固定延迟
+    this.playSongAudio();
   },
 
   /**
@@ -121,9 +167,11 @@ Page({
       userAnswer: null
     }));
 
-    // 设置歌曲音频源
+    // 停止当前播放并设置新的音频源
+    this._songAudio.stop();
     this._songAudio.src = question.audio;
 
+    // 重置自动播放状态，强制等待 onCanplay
     this.setData({
       song,
       rootNote: question.rootNote,
@@ -136,7 +184,16 @@ Page({
       flashingIndex: null,
       isPlaying: false,
       songProgress: 0,
+      shouldAutoPlay: false,  // 重置，等待 playSongAudio 设置
     });
+
+    // 预加载下一首歌曲封面
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < allQuestions.length) {
+      const nextQuestion = allQuestions[nextIndex];
+      const nextSong = songs.getSong(nextQuestion.songId);
+      this.setData({ preloadCover: nextSong.cover });
+    }
   },
 
   /**
@@ -147,7 +204,9 @@ Page({
     const availableChords = [
       'I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii',
       'I△7', 'ii-7', 'iii-7', 'IV△7', 'V7', 'vi-7',
-      'III7', '#V'
+      'I7', 'v-7', 'III7', '#V',
+      'iv', 'III', 'VI', 'VII',
+      'i'
     ];
 
     const options = [correctAnswer];
@@ -210,18 +269,19 @@ Page({
 
   /**
    * 播放歌曲片段（自动播放用）
+   * 设置标记，等待 onCanplay 触发后播放
    */
   playSongAudio() {
-    this._songAudio.play();
-    this.setData({ isPlaying: true, pageState: 'idle' });
+    // 清理旧的进度更新定时器
+    if (this._updateProgressTimer) {
+      clearInterval(this._updateProgressTimer);
+      this._updateProgressTimer = null;
+    }
 
-    // 更新进度
-    this._updateProgressTimer = setInterval(() => {
-      if (this._songAudio.duration > 0) {
-        const progress = (this._songAudio.currentTime / this._songAudio.duration) * 100;
-        this.setData({ songProgress: Math.min(progress, 100) });
-      }
-    }, 100);
+    // 设置自动播放标记，等待 onCanplay 触发
+    this.setData({ shouldAutoPlay: true });
+
+    // 不再依赖 duration 判断，完全由 onCanplay 驱动
   },
 
   /**
@@ -445,9 +505,8 @@ Page({
     this.setData({ currentIndex: nextIndex });
     this.generateQuestion();
 
-    setTimeout(() => {
-      this.playSongAudio();
-    }, 300);
+    // 播放由 onCanplay 事件驱动，无需固定延迟
+    this.playSongAudio();
   },
 
   /**

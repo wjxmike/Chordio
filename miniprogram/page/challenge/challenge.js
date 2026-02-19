@@ -66,6 +66,9 @@ Page({
       fail: (err) => console.error('Protest Strike 加载失败', err)
     });
 
+    // 绑定和弦格式化函数供模板使用
+    this.getChordNodes = chords.getChordNodes;
+
     // 初始化根音
     const rootNote = chords.randomRootNote();
     this.setData({ rootNote });

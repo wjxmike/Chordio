@@ -212,3 +212,11 @@ page {
   font-size: 36rpx;
   font-weight: 600;
 }
+
+/* 上标样式 */
+.chord-block-text sup,
+.option-text sup {
+  font-size: 0.55em;
+  vertical-align: super;
+  line-height: 0;
+}

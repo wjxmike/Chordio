@@ -180,3 +180,11 @@ page {
   font-weight: 400;
   letter-spacing: 3.2rpx;
 }
+
+/* 上标样式 */
+.chord-block-text sup,
+.option-text sup {
+  font-size: 0.55em;
+  vertical-align: super;
+  line-height: 0;
+}

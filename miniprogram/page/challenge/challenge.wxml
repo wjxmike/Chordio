@@ -1,3 +1,4 @@
+<wxs src="../../utils/chord-format.wxs" module="chordFmt" />
 <view class="challenge-container">
   <!-- 顶部状态栏：生命值 + 分数 -->
   <view class="status-row">
@@ -18,17 +19,17 @@
   <!-- 和弦方块 -->
   <view class="chord-blocks-row">
     <view wx:for="{{progression}}" wx:key="index" class="chord-block {{item.isBlank ? (pageState === 'correct' ? 'chord-block--correct' : (pageState === 'wrong' ? 'chord-block--wrong' : 'chord-block--blank')) : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
-      <text wx:if="{{!item.isBlank}}" class="chord-block-text">{{item.symbol}}</text>
-      <text wx:elif="{{pageState === 'correct'}}" class="chord-block-text">{{item.answer}}</text>
-      <text wx:elif="{{pageState === 'wrong'}}" class="chord-block-text">{{item.answer}}</text>
-      <text wx:elif="{{item.userAnswer}}" class="chord-block-text">{{item.userAnswer}}</text>
+      <rich-text wx:if="{{!item.isBlank}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.symbol)}}"></rich-text>
+      <rich-text wx:elif="{{pageState === 'correct'}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.answer)}}"></rich-text>
+      <rich-text wx:elif="{{pageState === 'wrong'}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.answer)}}"></rich-text>
+      <rich-text wx:elif="{{item.userAnswer}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.userAnswer)}}"></rich-text>
     </view>
   </view>
 
   <!-- 答题选项 2×2 -->
   <view class="options-grid">
     <view wx:for="{{options}}" wx:key="index" class="option-card {{flashingIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && correctAnswers.indexOf(item) >= 0 ? 'option-card--correct' : ''}}" hover-class="{{pageState === 'playing' || pageState === 'correct' || pageState === 'wrong' ? '' : 'option-card--hover'}}" hover-stay-time="100" data-index="{{index}}" bindtap="onOptionSelect">
-      <text class="option-text">{{item}}</text>
+      <rich-text class="option-text" nodes="{{chordFmt.getNodes(item)}}"></rich-text>
     </view>
   </view>
 
