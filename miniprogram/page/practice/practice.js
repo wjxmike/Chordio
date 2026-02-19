@@ -157,22 +157,31 @@ Page({
    * 点击顶部方块（重新听某个和弦，或取消选择）
    */
   onBlockTap(e) {
-    const { pageState, progression, rootNote, level, blankIndex } = this.data;
+    const { pageState, progression, rootNote, level, blankIndex, correctAnswer } = this.data;
     // playing 状态下不允许点击
     if (pageState === 'playing') return;
 
     const index = e.currentTarget.dataset.index;
 
-    // 点击填空处且已选中：取消选择，回到 idle
-    if (index === blankIndex && pageState === 'selected') {
-      this.vibrateShort();
-      audio.stopCurrentPlayback();
-      this.setData({
-        selectedAnswer: null,
-        pageState: 'idle',
-        hasWronged: false
-      });
-      return;
+    // 点击填空处
+    if (index === blankIndex) {
+      if (pageState === 'correct') {
+        // 答对后：播放正确答案的和弦，不取消选择
+        this.vibrateShort();
+        const ctx = audio.getAudioContext();
+        audio.playOneChord(ctx, correctAnswer, rootNote, level);
+        return;
+      } else if (pageState === 'selected') {
+        // 已选中：取消选择，回到 idle
+        this.vibrateShort();
+        audio.stopCurrentPlayback();
+        this.setData({
+          selectedAnswer: null,
+          pageState: 'idle',
+          hasWronged: false
+        });
+        return;
+      }
     }
 
     this.vibrateShort();
@@ -353,11 +362,19 @@ Page({
    */
   onOptionSelect(e) {
     const { pageState, selectedAnswer, rootNote, level } = this.data;
-    // playing 状态下不允许选择
+    // playing 状态下不允许操作
     if (pageState === 'playing') return;
 
     const selected = e.currentTarget.dataset.chord;
     const index = e.currentTarget.dataset.index;
+
+    // correct 状态下只播放声音，不改变答案
+    if (pageState === 'correct') {
+      this.vibrateShort();
+      const ctx = audio.getAudioContext();
+      audio.playOneChord(ctx, selected, rootNote, level);
+      return;
+    }
 
     // 选中状态下再次点击同一选项：取消选择
     if (pageState === 'selected' && selected === selectedAnswer) {
