@@ -119,6 +119,11 @@ page {
   border-width: 4rpx;
 }
 
+.option-card--hover {
+  border-color: #FF7A15;
+  border-width: 4rpx;
+}
+
 .option-card--correct {
   background-color: #78C04B;
   border-color: #78C04B;

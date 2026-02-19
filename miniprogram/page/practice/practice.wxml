@@ -12,12 +12,13 @@
     <view wx:for="{{progression}}" wx:key="index" class="chord-block {{index === blankIndex ? (pageState === 'correct' ? 'chord-block--correct' : 'chord-block--blank') : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
       <text wx:if="{{index !== blankIndex}}" class="chord-block-text">{{item}}</text>
       <text wx:elif="{{pageState === 'correct'}}" class="chord-block-text">{{correctAnswer}}</text>
+      <text wx:elif="{{pageState === 'selected'}}" class="chord-block-text">{{selectedAnswer}}</text>
     </view>
   </view>
 
   <!-- 3. 答题选项 2×2 -->
   <view class="options-grid">
-    <view wx:for="{{options}}" wx:key="index" class="option-card {{selectedAnswer === item && pageState === 'selected' ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" data-chord="{{item}}" bindtap="onOptionSelect">
+    <view wx:for="{{options}}" wx:key="index" class="option-card {{flashingIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" hover-class="{{pageState === 'playing' ? '' : 'option-card--hover'}}" hover-stay-time="100" data-chord="{{item}}" data-index="{{index}}" bindtap="onOptionSelect">
       <text class="option-text">{{item}}</text>
     </view>
   </view>

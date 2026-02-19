@@ -41,6 +41,7 @@ Page({
     pageState: 'idle',       // 'idle' | 'playing' | 'selected' | 'correct' | 'wrong'
     selectedAnswer: null,    // 用户当前选择的选项
     hasWronged: false,       // 本题是否答错过
+    flashingIndex: null,     // 短暂高亮的选项索引
 
     // 统计
     correctCount: 0,         // 本套练习答对数量
@@ -153,15 +154,28 @@ Page({
   },
 
   /**
-   * 点击顶部方块（重新听某个和弦）
+   * 点击顶部方块（重新听某个和弦，或取消选择）
    */
   onBlockTap(e) {
-    const { pageState, progression, rootNote, level } = this.data;
+    const { pageState, progression, rootNote, level, blankIndex } = this.data;
     // playing 状态下不允许点击
     if (pageState === 'playing') return;
 
-    this.vibrateShort();
     const index = e.currentTarget.dataset.index;
+
+    // 点击填空处且已选中：取消选择，回到 idle
+    if (index === blankIndex && pageState === 'selected') {
+      this.vibrateShort();
+      audio.stopCurrentPlayback();
+      this.setData({
+        selectedAnswer: null,
+        pageState: 'idle',
+        hasWronged: false
+      });
+      return;
+    }
+
+    this.vibrateShort();
     const chordSymbol = progression[index];
     const ctx = audio.getAudioContext();
     audio.playOneChord(ctx, chordSymbol, rootNote, level);
@@ -335,7 +349,7 @@ Page({
   },
 
   /**
-   * 用户选择答案（仅选中 + 播放该选项和弦，不判题）
+   * 用户选择答案（短暂高亮 + 播放和弦 + 填空显示）
    */
   onOptionSelect(e) {
     const { pageState, selectedAnswer, rootNote, level } = this.data;
@@ -343,6 +357,7 @@ Page({
     if (pageState === 'playing') return;
 
     const selected = e.currentTarget.dataset.chord;
+    const index = e.currentTarget.dataset.index;
 
     // 选中状态下再次点击同一选项：取消选择
     if (pageState === 'selected' && selected === selectedAnswer) {
@@ -351,15 +366,25 @@ Page({
       this.setData({
         selectedAnswer: null,
         pageState: 'idle',
-        hasWronged: false
+        hasWronged: false,
+        flashingIndex: null
       });
       return;
     }
 
+    // 显示短暂高亮
     this.vibrateShort();
     this.setData({
+      flashingIndex: index,
       selectedAnswer: selected,
       pageState: 'selected'
+    });
+
+    // 高亮后熄灭（使用 nextTick 确保渲染完成，延长到 150ms）
+    wx.nextTick(() => {
+      setTimeout(() => {
+        this.setData({ flashingIndex: null });
+      }, 300);
     });
 
     // 播放所选选项的和弦
