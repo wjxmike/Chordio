@@ -9,12 +9,12 @@ const audio = require('../../utils/audio');
 // 难度配置
 const DIFFICULTY_CONFIG = {
   // 分数阈值 -> { 时间, 填空数 }
-  0: { time: 15, blanks: 1 },
-  10: { time: 12, blanks: 1 },
-  20: { time: 10, blanks: 2 },
-  40: { time: 8, blanks: 2 },
-  60: { time: 6, blanks: 2 },
-  80: { time: 5, blanks: 3 },
+  0: { time: 20, blanks: 1 },
+  10: { time: 17, blanks: 1 },
+  20: { time: 15, blanks: 2 },
+  40: { time: 13, blanks: 2 },
+  60: { time: 11, blanks: 2 },
+  80: { time: 10, blanks: 3 },
 };
 
 Page({
@@ -28,13 +28,15 @@ Page({
 
     // 当前题目
     rootNote: 'C',
-    progression: [],     // [{symbol: 'I', isBlank: false, answer: null}, ...]
-    correctAnswer: '',   // 当前填空的正确答案
+    progression: [],       // [{symbol: 'I', isBlank: false, answer: null, userAnswer: null}, ...]
+    blankIndices: [],      // 填空位置数组
+    correctAnswers: [],    // 所有填空的正确答案
     options: [],
 
     // 用户交互
     pageState: 'playing',  // 'playing' | 'idle' | 'selected' | 'correct' | 'wrong'
-    selectedIndex: null,
+    flashingIndex: null,
+    selectedAnswer: null,
   },
 
   // 计时器
@@ -104,22 +106,25 @@ Page({
     const config = this.getDifficultyConfig();
     this._currentBlanks = config.blanks;
 
-    // 生成基础问题（单填空）
-    const q = chords.generateQuestion(rootNote, 'triads', null, -1);
+    // 生成多填空问题
+    const q = chords.generateQuestion(rootNote, 'triads', null, -1, config.blanks);
 
     // 转换为带标记的数组
     const progression = q.progression.map((symbol, index) => ({
       symbol,
-      isBlank: index === q.blankIndex,
-      answer: index === q.blankIndex ? q.correctAnswer : null
+      isBlank: q.blankIndices.includes(index),
+      answer: q.blankIndices.includes(index) ? q.correctAnswers[q.blankIndices.indexOf(index)] : null,
+      userAnswer: null
     }));
 
     this.setData({
       progression,
-      correctAnswer: q.correctAnswer,
+      blankIndices: q.blankIndices,
+      correctAnswers: q.correctAnswers,
       options: q.options,
       pageState: 'playing',
-      selectedIndex: null,
+      flashingIndex: null,
+      selectedAnswer: null,
       timer: config.time,
       maxTime: config.time,
     });
@@ -134,8 +139,8 @@ Page({
     const ctx = audio.getAudioContext();
     audio.playProgression(ctx, symbols, rootNote, 'triads');
 
-    // 播放结束后切换到 idle
-    const duration = symbols.length * 1.6;
+    // 最后一个和弦开始后 1 秒切换到 idle（可操作）
+    const duration = (symbols.length - 1) * 1.2 + 1;
     setTimeout(() => {
       if (this.data.pageState === 'playing') {
         this.setData({ pageState: 'idle' });
@@ -198,28 +203,54 @@ Page({
       }
     }
 
+    this.stopTimer();
     this.setData({ hearts, pageState: 'wrong' });
 
     // 震动反馈
     wx.vibrateShort({ type: 'heavy' });
 
-    // 短暂显示后进入下一题
-    setTimeout(() => {
-      this.nextQuestion();
-    }, 800);
+    // 不自动进入下一题，等待用户点击"下一题"
   },
 
   /**
-   * 点击方块重新听
+   * 点击方块重新听或清除填空
    */
   onBlockTap(e) {
     const { pageState, progression, rootNote } = this.data;
     if (pageState === 'playing') return;
 
     const index = e.currentTarget.dataset.index;
-    const chordSymbol = progression[index].symbol;
+    const block = progression[index];
+
+    // 点击填空处
+    if (block.isBlank) {
+      if (pageState === 'correct' || pageState === 'wrong') {
+        // 答题完成：播放正确答案的和弦，不取消选择
+        const ctx = audio.getAudioContext();
+        audio.playOneChord(ctx, block.answer, rootNote, 'triads');
+        wx.vibrateShort({ type: 'light' });
+      } else if (block.userAnswer) {
+        // idle/selected 状态且已有答案：清除
+        const newProgression = [...progression];
+        newProgression[index] = { ...newProgression[index], userAnswer: null };
+        this.setData({
+          progression: newProgression,
+          flashingIndex: null,
+          selectedAnswer: null,
+          pageState: 'idle'
+        });
+      } else if (pageState === 'idle') {
+        // 空白处且 idle 状态：播放这个位置的和弦
+        const ctx = audio.getAudioContext();
+        audio.playOneChord(ctx, block.symbol, rootNote, 'triads');
+        wx.vibrateShort({ type: 'light' });
+      }
+      return;
+    }
+
+    // 点击其他方块：播放和弦
     const ctx = audio.getAudioContext();
-    audio.playOneChord(ctx, chordSymbol, rootNote, 'triads');
+    audio.playOneChord(ctx, block.symbol, rootNote, 'triads');
     wx.vibrateShort({ type: 'light' });
   },
 
@@ -227,40 +258,90 @@ Page({
    * 选择答案
    */
   onOptionSelect(e) {
-    const { pageState, selectedIndex } = this.data;
-    if (pageState === 'playing') return;
+    const { pageState, flashingIndex, options, progression, blankIndices } = this.data;
+    if (pageState === 'playing' || pageState === 'correct' || pageState === 'wrong') return;
 
     const index = e.currentTarget.dataset.index;
-    const selected = this.data.options[index];
+    const selected = options[index];
 
-    // 取消选择
-    if (selectedIndex === index) {
-      this.setData({ selectedIndex: null, pageState: 'idle' });
-      audio.stopCurrentPlayback();
+    // 取消选择（不播放声音）
+    if (flashingIndex === index) {
+      this.setData({ flashingIndex: null, selectedAnswer: null, pageState: 'idle' });
       return;
     }
 
-    // 选中
-    this.setData({ selectedIndex: index, pageState: 'selected' });
-
-    // 播放所选和弦
-    const ctx = audio.getAudioContext();
-    audio.playOneChord(ctx, selected, this.data.rootNote, 'triads');
+    // 选中 + 短暂高亮（不播放声音）
     wx.vibrateShort({ type: 'light' });
+
+    // 找到第一个未填的填空位置
+    let targetBlankIndex = null;
+    for (const blankIdx of blankIndices) {
+      if (!progression[blankIdx].userAnswer) {
+        targetBlankIndex = blankIdx;
+        break;
+      }
+    }
+
+    // 如果没有空位，替换最后一个填空
+    if (targetBlankIndex === null && blankIndices.length > 0) {
+      targetBlankIndex = blankIndices[blankIndices.length - 1];
+    }
+
+    // 更新填空
+    if (targetBlankIndex !== null) {
+      const newProgression = [...progression];
+      newProgression[targetBlankIndex] = {
+        ...newProgression[targetBlankIndex],
+        userAnswer: selected
+      };
+
+      // 检查是否所有填空都已填写
+      const allFilled = blankIndices.every(idx => newProgression[idx].userAnswer);
+
+      this.setData({
+        progression: newProgression,
+        flashingIndex: index,
+        selectedAnswer: selected,
+        pageState: allFilled ? 'selected' : 'idle'
+      });
+    } else {
+      this.setData({
+        flashingIndex: index,
+        selectedAnswer: selected,
+        pageState: 'selected'
+      });
+    }
+
+    // 高亮后熄灭
+    wx.nextTick(() => {
+      setTimeout(() => {
+        this.setData({ flashingIndex: null });
+      }, 300);
+    });
   },
 
   /**
    * 底部按钮点击
    */
   onBottomButtonTap() {
-    const { pageState, selectedIndex, correctAnswer, options } = this.data;
+    const { pageState, progression, blankIndices, correctAnswers } = this.data;
 
-    if (pageState === 'selected' && selectedIndex !== null) {
-      // 确认答案
-      const selected = options[selectedIndex];
+    if (pageState === 'selected') {
+      // 确认答案 - 检查所有填空
       wx.vibrateShort({ type: 'light' });
 
-      if (selected === correctAnswer) {
+      // 检查每个填空是否正确
+      let allCorrect = true;
+      for (let i = 0; i < blankIndices.length; i++) {
+        const blankIdx = blankIndices[i];
+        const userAnswer = progression[blankIdx].userAnswer;
+        if (userAnswer !== correctAnswers[i]) {
+          allCorrect = false;
+          break;
+        }
+      }
+
+      if (allCorrect) {
         // 答对
         this.stopTimer();
         this.setData({

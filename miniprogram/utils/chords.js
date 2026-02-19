@@ -398,8 +398,9 @@ function isSameProgression(prog1, prog2) {
  * @param {string} level - 级别 ('triads', 'sevenths', 'chromatic')
  * @param {string[]} prevProgression - 上一题的走向（用于避免连续重复）
  * @param {number} prevBlankIndex - 上一题的填空位置（用于非连续相同走向时确保不同位置）
+ * @param {number} numBlanks - 填空数量（默认1）
  */
-function generateQuestion(rootNote, level = 'triads', prevProgression = null, prevBlankIndex = -1) {
+function generateQuestion(rootNote, level = 'triads', prevProgression = null, prevBlankIndex = -1, numBlanks = 1) {
   // 1. 从题库随机选择一个走向
   let progression = pickRandomProgression(level);
   let attempts = 0;
@@ -411,32 +412,51 @@ function generateQuestion(rootNote, level = 'triads', prevProgression = null, pr
     attempts++;
   }
 
-  // 2. 随机选一个位置作为"空心"（需要用户识别的）
-  let blankIndex = Math.floor(Math.random() * progression.length);
+  // 2. 随机选位置作为"空心"
+  // 确保填空数量不超过进行长度
+  const actualNumBlanks = Math.min(numBlanks, progression.length);
 
-  // 如果走向与上一题相同（非连续），确保填空位置不同
-  if (isSameProgression(progression, prevProgression) && prevBlankIndex >= 0) {
-    // 选择一个不同的位置
-    const availableIndices = [];
-    for (let i = 0; i < progression.length; i++) {
-      if (i !== prevBlankIndex) {
-        availableIndices.push(i);
-      }
-    }
-    if (availableIndices.length > 0) {
-      blankIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-    }
+  // 生成所有可能的位置
+  const allIndices = Array.from({ length: progression.length }, (_, i) => i);
+
+  // 随机选择 actualNumBlanks 个不同的位置
+  const blankIndices = [];
+  const shuffledIndices = [...allIndices].sort(() => Math.random() - 0.5);
+  for (let i = 0; i < actualNumBlanks; i++) {
+    blankIndices.push(shuffledIndices[i]);
+  }
+  blankIndices.sort((a, b) => a - b); // 按顺序排列
+
+  // 获取所有正确答案
+  const correctAnswers = blankIndices.map(idx => progression[idx]);
+
+  // 3. 生成4个选项（包含所有正确答案）
+  const available = getAvailableChords(level);
+  const options = [...correctAnswers];
+
+  // 从剩余和弦中选择干扰项
+  const remaining = available.filter(c => !correctAnswers.includes(c));
+  while (options.length < 4 && remaining.length > 0) {
+    const idx = Math.floor(Math.random() * remaining.length);
+    options.push(remaining.splice(idx, 1)[0]);
   }
 
-  const correctAnswer = progression[blankIndex];
+  // 洗牌
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
 
-  // 3. 生成4个选项
-  const options = generateOptions(correctAnswer, level);
+  // 兼容单填空模式
+  const blankIndex = blankIndices[0];
+  const correctAnswer = correctAnswers[0];
 
   return {
     progression,
-    blankIndex,
-    correctAnswer,
+    blankIndex,      // 兼容：第一个填空的位置
+    correctAnswer,   // 兼容：第一个填空的答案
+    blankIndices,    // 新：所有填空位置
+    correctAnswers,  // 新：所有填空答案
     options
   };
 }
