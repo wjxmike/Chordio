@@ -5,6 +5,8 @@
     "page/practice/practice",
     "page/challenge/challenge",
     "page/song/song",
+    "page/profile/profile",
+    "page/settings/settings",
     "page/audio-test/audio-test"
   ],
   "window": {

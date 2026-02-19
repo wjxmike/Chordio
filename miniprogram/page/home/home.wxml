@@ -42,7 +42,7 @@
 
   <!-- 底部导航栏 -->
   <view class="footer">
-    <view class="nav-btn nav-btn--active" bindtap="onHomeTap">
+    <view class="nav-btn" bindtap="onHomeTap">
       <image class="nav-icon" src="/assets/images/logo.svg" mode="aspectFit"></image>
     </view>
     <view class="nav-btn" bindtap="onProfileTap">

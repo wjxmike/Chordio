@@ -172,19 +172,26 @@ page {
 
 /* 分割线 */
 .divider {
-  width: 100%;
+  position: fixed;
+  bottom: 158rpx;
+  left: 48rpx;
+  right: 48rpx;
   height: 2rpx;
   background-color: #535353;
-  margin-bottom: 20rpx;
 }
 
 /* 底部导航栏 */
 .footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 250rpx;
   padding-bottom: 60rpx;
+  background-color: #1C1C1C;
 }
 
 .nav-btn {

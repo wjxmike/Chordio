@@ -3,6 +3,8 @@
  * 先显示启动页，字体加载完成后过渡到首页
  */
 
+const app = getApp();
+
 Page({
   data: {
     showSplash: true,    // 是否显示启动页
@@ -12,20 +14,24 @@ Page({
   },
 
   onLoad() {
+    // 从本地存储读取 streak
+    this.loadStreak();
+
+    // 如果已经显示过启动页，直接显示首页（但仍然需要加载字体）
+    if (app.globalData.splashShown) {
+      this.setData({ showSplash: false, fontsLoaded: true });
+      // 仍然加载字体（字体加载是异步的，不影响页面显示）
+      this.loadFonts();
+      return;
+    }
+
+    // 首次打开：显示启动页动画
     // 记录开始时间，确保启动页最少显示 2.5 秒（让动画完成）
-    // 动画：0.4s延迟 + 0.6s动画 = 1s，加上一些缓冲时间
     const startTime = Date.now();
     const minDuration = 2500;
 
-    // 并行加载所有字体
-    const fontPromises = [
-      this.loadFont('Fredoka One', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/FredokaOne-Regular.ttf'),
-      this.loadFont('江城圆体', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets@ed749764/fonts/JiangChengYuanTi-700W.ttf'),
-      this.loadFont('Protest Strike', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/ProtestStrike.ttf')
-    ];
-
-    // 等待所有字体加载完成
-    Promise.all(fontPromises).then(() => {
+    // 加载字体
+    this.loadFonts().then(() => {
       console.log('所有字体加载完成');
 
       // 显示启动页文字（触发动画）
@@ -38,11 +44,22 @@ Page({
       // 等待剩余时间后切换到首页
       setTimeout(() => {
         this.setData({ showSplash: false });
+        // 标记启动页已显示
+        app.globalData.splashShown = true;
       }, remaining);
     });
+  },
 
-    // 从本地存储读取 streak
-    this.loadStreak();
+  /**
+   * 加载所有字体，返回 Promise
+   */
+  loadFonts() {
+    const fontPromises = [
+      this.loadFont('Fredoka One', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/FredokaOne-Regular.ttf'),
+      this.loadFont('江城圆体', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/JiangChengYuanTi-700W-subset.ttf'),
+      this.loadFont('Protest Strike', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/ProtestStrike.ttf')
+    ];
+    return Promise.all(fontPromises);
   },
 
   onShow() {
@@ -132,9 +149,8 @@ Page({
    */
   onProfileTap() {
     this.vibrateShort();
-    wx.showToast({
-      title: '即将上线',
-      icon: 'none'
+    wx.redirectTo({
+      url: '/page/profile/profile'
     });
   },
 

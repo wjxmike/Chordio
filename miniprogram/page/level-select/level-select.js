@@ -40,7 +40,7 @@ Page({
 
     wx.loadFontFace({
       family: '江城圆体',
-      source: 'url("https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets@ed749764/fonts/JiangChengYuanTi-700W.ttf")',
+      source: 'url("https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/JiangChengYuanTi-700W-subset.ttf")',
       success: (res) => console.log('江城圆体 加载成功', res),
       fail: (err) => console.error('江城圆体 加载失败', err)
     });
