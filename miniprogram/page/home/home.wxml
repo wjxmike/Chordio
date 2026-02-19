@@ -20,20 +20,20 @@
   <view class="cards-container">
     <!-- Practice Mode -->
     <view class="mode-card {{selectedMode === 'practice' ? 'mode-card--active' : ''}}" bindtap="onPracticeTap" hover-class="mode-card--hover">
-      <text class="card-title-en">Practice</text>
       <text class="card-title-cn">练习模式</text>
+      <text class="card-title-en">Practice</text>
     </view>
 
     <!-- Challenge Mode -->
     <view class="mode-card {{selectedMode === 'challenge' ? 'mode-card--active' : ''}}" bindtap="onChallengeTap" hover-class="mode-card--hover">
-      <text class="card-title-en">Challenge</text>
       <text class="card-title-cn">挑战模式</text>
+      <text class="card-title-en">Challenge</text>
     </view>
 
     <!-- Songs Mode -->
     <view class="mode-card {{selectedMode === 'songs' ? 'mode-card--active' : ''}}" bindtap="onSongsTap" hover-class="mode-card--hover">
-      <text class="card-title-en">Songs</text>
       <text class="card-title-cn">歌曲模式</text>
+      <text class="card-title-en">Songs</text>
     </view>
   </view>
 

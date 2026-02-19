@@ -100,13 +100,10 @@ Page({
     this.setData({ selectedMode: 'challenge' });
 
     setTimeout(() => {
-      wx.showToast({
-        title: '即将上线',
-        icon: 'none'
+      wx.navigateTo({
+        url: '/page/challenge/challenge'
       });
-      // 清除选中状态
-      this.setData({ selectedMode: null });
-    }, 200);
+    }, 150);
   },
 
   /**

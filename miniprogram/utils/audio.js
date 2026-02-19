@@ -332,7 +332,7 @@ function playRootNote(ctx, frequency, duration = 2.0) {
 function playProgression(ctx, progression, rootNote, level = 'triads') {
   stopCurrentPlayback();
 
-  const CHORD_INTERVAL = 1.6;
+  const CHORD_INTERVAL = 1.2;
   const actualCtx = getAudioContext();
 
   const scheduleNotes = () => {

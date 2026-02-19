@@ -1,0 +1,42 @@
+<view class="challenge-container">
+  <!-- 顶部状态栏：生命值 + 分数 -->
+  <view class="status-row">
+    <view class="hearts">
+      <image wx:for="{{hearts}}" wx:key="index" class="heart-icon" src="{{item ? '/assets/images/heart.svg' : '/assets/images/hollow-heart.svg'}}" mode="aspectFit"></image>
+    </view>
+    <view class="score-display">
+      <text class="score-label">分数:</text>
+      <text class="score-value">{{score}}</text>
+    </view>
+  </view>
+
+  <!-- 倒计时进度条 -->
+  <view class="timer-bar-bg">
+    <view class="timer-bar-fill" style="width: {{(timer / maxTime) * 100}}%"></view>
+  </view>
+
+  <!-- 和弦方块 -->
+  <view class="chord-blocks-row">
+    <view wx:for="{{progression}}" wx:key="index" class="chord-block {{item.isBlank ? (pageState === 'correct' ? 'chord-block--correct' : 'chord-block--blank') : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
+      <text wx:if="{{!item.isBlank}}" class="chord-block-text">{{item.symbol}}</text>
+      <text wx:elif="{{pageState === 'correct'}}" class="chord-block-text">{{item.answer}}</text>
+    </view>
+  </view>
+
+  <!-- 答题选项 2×2 -->
+  <view class="options-grid">
+    <view wx:for="{{options}}" wx:key="index" class="option-card {{selectedIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" data-index="{{index}}" bindtap="onOptionSelect">
+      <text class="option-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 底部按钮：根音 -->
+  <view class="bottom-btn {{pageState === 'correct' ? 'bottom-btn--correct' : ''}} {{pageState === 'selected' ? 'bottom-btn--confirm' : ''}}" bindtap="{{pageState === 'correct' ? 'onNextQuestion' : 'onBottomButtonTap'}}">
+    <block wx:if="{{pageState !== 'correct'}}">
+      <text class="root-note-text">{{rootNote}}</text>
+    </block>
+    <block wx:else>
+      <text class="bottom-btn-text">下一题</text>
+    </block>
+  </view>
+</view>

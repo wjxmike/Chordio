@@ -24,20 +24,9 @@
 
   <!-- 5. 底部按钮 -->
   <view class="bottom-btn {{pageState === 'correct' ? 'bottom-btn--correct' : ''}} {{(pageState === 'idle' && hasWronged) || pageState === 'wrong' ? 'bottom-btn--retry' : ''}} {{pageState === 'selected' ? 'bottom-btn--confirm' : ''}}" bindtap="{{pageState === 'correct' ? 'onNextTap' : 'onBottomButtonTap'}}">
-    <!-- 默认：波形图标（根音播放） -->
+    <!-- 默认：根音字母 -->
     <block wx:if="{{pageState === 'idle' && !hasWronged}}">
-      <view class="waveform">
-        <view class="wave-bar wave-bar--short"></view>
-        <view class="wave-bar wave-bar--medium"></view>
-        <view class="wave-bar wave-bar--tall"></view>
-        <view class="wave-bar wave-bar--medium"></view>
-        <view class="wave-bar wave-bar--short"></view>
-        <view class="wave-bar wave-bar--medium"></view>
-        <view class="wave-bar wave-bar--tall"></view>
-        <view class="wave-bar wave-bar--medium"></view>
-        <view class="wave-bar wave-bar--short"></view>
-        <view class="wave-bar wave-bar--medium"></view>
-      </view>
+      <text class="root-note-text">{{rootNote}}</text>
     </block>
 
     <!-- 再试试 -->

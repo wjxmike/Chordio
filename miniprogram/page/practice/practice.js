@@ -59,6 +59,13 @@ Page({
       fail: (err) => console.error('字体加载失败', err)
     });
 
+    wx.loadFontFace({
+      family: 'Fredoka One',
+      source: 'url("https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/FredokaOne-Regular.ttf")',
+      success: (res) => console.log('Fredoka One 加载成功', res),
+      fail: (err) => console.error('Fredoka One 加载失败', err)
+    });
+
     // 设置关卡信息
     this.setData({
       level,
@@ -164,7 +171,7 @@ Page({
    * 点击底部按钮
    */
   onBottomButtonTap() {
-    const { pageState, hasWronged, selectedAnswer, correctAnswer, rootNote } = this.data;
+    const { pageState, hasWronged, selectedAnswer, correctAnswer } = this.data;
 
     if (pageState === 'selected') {
       // 确认：判题
@@ -190,12 +197,41 @@ Page({
     }
 
     if (pageState === 'idle' && !hasWronged) {
-      // 播放根音
+      // 播放根音（正弦波）
       this.vibrateShort();
-      const ctx = audio.getAudioContext();
-      const rootFreq = audio.getRootFrequency(rootNote);
-      audio.playRootNote(ctx, rootFreq);
+      this.playRootNoteSine();
     }
+  },
+
+  /**
+   * 播放根音（正弦波）
+   */
+  playRootNoteSine() {
+    const { rootNote } = this.data;
+    const freq = chords.ROOT_FREQUENCIES[rootNote];
+    if (!freq) return;
+
+    const ctx = audio.getAudioContext();
+
+    // 创建振荡器
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.value = freq / 2;  // 低一个八度
+
+    // ADSR 包络
+    const now = ctx.currentTime;
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.2, now + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 1.5);
   },
 
   /**
