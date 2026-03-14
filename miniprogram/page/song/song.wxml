@@ -50,7 +50,7 @@
   <!-- 底部按钮：根音/确认/下一题 -->
   <view class="bottom-btn {{pageState === 'correct' ? 'bottom-btn--correct' : ''}} {{pageState === 'selected' ? 'bottom-btn--confirm' : ''}} {{pageState === 'wrong' ? 'bottom-btn--wrong' : ''}}" bindtap="{{pageState === 'correct' ? 'onNextQuestion' : 'onBottomButtonTap'}}">
     <block wx:if="{{pageState === 'idle'}}">
-      <text class="root-note-text">{{rootNote}}</text>
+      <text class="root-note-text">{{rootNoteDisplay}}</text>
     </block>
     <block wx:elif="{{pageState === 'selected'}}">
       <text class="bottom-btn-text">确认</text>

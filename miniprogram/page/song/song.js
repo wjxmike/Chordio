@@ -19,6 +19,7 @@ Page({
 
     // 当前题目
     rootNote: 'C',
+    rootNoteDisplay: 'C', // 显示用的根音（小调会显示 "Fm"）
     progression: [],      // [{symbol, isBlank, answer, userAnswer}, ...]
     blankIndex: 0,        // 填空位置
     correctAnswer: '',    // 正确答案
@@ -171,10 +172,14 @@ Page({
     this._songAudio.stop();
     this._songAudio.src = question.audio;
 
+    // 计算显示用的根音（小调显示 "Fm"，大调显示 "F"）
+    const rootNoteDisplay = question.isMinor ? question.rootNote + 'm' : question.rootNote;
+
     // 重置自动播放状态，强制等待 onCanplay
     this.setData({
       song,
       rootNote: question.rootNote,
+      rootNoteDisplay,
       progression,
       blankIndex,
       correctAnswer,

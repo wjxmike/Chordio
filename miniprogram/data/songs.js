@@ -217,14 +217,16 @@ const QUESTIONS = [
     id: '7-1',
     songId: '7',
     audio: `${CLOUD_BASE}/song-audio/7-1.mp3`,
-    rootNote: 'F',  // Fm = F 小调
+    rootNote: 'F',
+    isMinor: true,  // Fm = F 小调
     progression: ['i', 'VI', 'III', 'V7']
   },
   {
     id: '7-2',
     songId: '7',
     audio: `${CLOUD_BASE}/song-audio/7-2.mp3`,
-    rootNote: 'F',  // Fm = F 小调
+    rootNote: 'F',
+    isMinor: true,  // Fm = F 小调
     progression: ['VI', 'III', 'V', 'i', 'VII']
   },
 
