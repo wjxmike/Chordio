@@ -39,9 +39,50 @@ page {
   margin-top: 10rpx;
 }
 
+/* 版本日志入口 */
+.changelog-entry {
+  margin-top: 48rpx;
+  width: 606rpx;
+  height: 88rpx;
+  background-color: #2A2A2A;
+  border: 4rpx solid #535353;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+  box-sizing: border-box;
+}
+
+.changelog-label {
+  font-family: '江城圆体', sans-serif;
+  font-size: 28rpx;
+  color: #FFFFFF;
+  letter-spacing: 1.4rpx;
+}
+
+.changelog-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.changelog-version {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 26rpx;
+  color: #FF7A15;
+}
+
+.changelog-arrow {
+  width: 32rpx;
+  height: 32rpx;
+  transform: rotate(180deg);
+  opacity: 0.6;
+}
+
 /* 关于卡片 */
 .about-card {
-  margin-top: 70rpx;
+  margin-top: 30rpx;
   width: 606rpx;
   height: 900rpx;
   background-color: #1C1C1C;
@@ -52,6 +93,7 @@ page {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  margin-bottom: 100rpx;
 }
 
 .about-content {
@@ -151,6 +193,7 @@ page {
   justify-content: center;
   padding: 0;
   line-height: 1;
+  margin-bottom: 30rpx;
 }
 
 .feedback-btn::after {

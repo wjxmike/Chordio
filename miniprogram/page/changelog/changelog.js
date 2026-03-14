@@ -1,12 +1,12 @@
 /**
- * Settings 页面 - 关于/设置
+ * 版本日志页面
  */
 
 const changelog = require('../../data/changelog');
 
 Page({
   data: {
-    version: changelog.getCurrentVersion()
+    changelog: changelog.getFullChangelog()
   },
 
   onLoad() {
@@ -23,24 +23,6 @@ Page({
       source: 'url("https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/JiangChengYuanTi-700W-subset.woff2")',
       success: (res) => console.log('江城圆体 加载成功', res),
       fail: (err) => console.error('江城圆体 加载失败', err)
-    });
-  },
-
-  /**
-   * 点击返回按钮
-   */
-  onBackTap() {
-    wx.vibrateShort({ type: 'light' });
-    wx.navigateBack();
-  },
-
-  /**
-   * 点击版本日志
-   */
-  onChangelogTap() {
-    wx.vibrateShort({ type: 'light' });
-    wx.navigateTo({
-      url: '/page/changelog/changelog'
     });
   }
 });

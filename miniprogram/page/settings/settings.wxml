@@ -10,6 +10,15 @@
     <text class="app-name">Chordiio</text>
   </view>
 
+  <!-- 版本日志入口 -->
+  <view class="changelog-entry" bindtap="onChangelogTap">
+    <text class="changelog-label">版本日志</text>
+    <view class="changelog-right">
+      <text class="changelog-version">v{{version}}</text>
+      <image class="changelog-arrow" src="/assets/images/back.svg" mode="aspectFit"></image>
+    </view>
+  </view>
+
   <!-- 关于卡片 -->
   <view class="about-card">
     <view class="about-content">
@@ -19,8 +28,6 @@
       <text class="about-text">这是一款由独立开发者</text>
       <text class="about-text highlight">@靖轩不懂音乐</text>
       <text class="about-text">制作的听音练习工具</text>
-
-      <text class="version-text">当前版本 v1.1.0 Beta</text>
 
       <view class="dev-features">
         <text class="features-title">开发中功能</text>

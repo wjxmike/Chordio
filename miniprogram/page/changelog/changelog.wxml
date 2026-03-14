@@ -1,0 +1,30 @@
+<view class="changelog-container">
+  <!-- 版本列表 -->
+  <scroll-view scroll-y class="changelog-list">
+    <view class="version-card" wx:for="{{changelog}}" wx:key="version">
+      <view class="version-header">
+        <text class="version-number">v{{item.version}}</text>
+        <text class="version-date">{{item.date}}</text>
+        <text class="version-badge" wx:if="{{item.isNew}}">最新</text>
+      </view>
+
+      <!-- 新功能 -->
+      <view class="update-section" wx:if="{{item.features.length > 0}}">
+        <text class="section-title">🎉 新功能</text>
+        <text class="section-item" wx:for="{{item.features}}" wx:for-item="feature" wx:key="index">{{feature}}</text>
+      </view>
+
+      <!-- 优化 -->
+      <view class="update-section" wx:if="{{item.improvements.length > 0}}">
+        <text class="section-title">🎨 优化</text>
+        <text class="section-item" wx:for="{{item.improvements}}" wx:for-item="improvement" wx:key="index">{{improvement}}</text>
+      </view>
+
+      <!-- 修复 -->
+      <view class="update-section" wx:if="{{item.fixes.length > 0}}">
+        <text class="section-title">🐛 修复</text>
+        <text class="section-item" wx:for="{{item.fixes}}" wx:for-item="fix" wx:key="index">{{fix}}</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

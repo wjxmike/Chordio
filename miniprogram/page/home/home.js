@@ -5,6 +5,7 @@
 
 const app = getApp();
 const playCount = require('../../utils/play-count');
+const changelog = require('../../data/changelog');
 
 Page({
   data: {
@@ -14,7 +15,9 @@ Page({
     remainingCount: 5,   // 剩余能量
     selectedMode: null,  // 当前选中的模式
     showBonusToast: false,  // 是否显示奖励浮窗
-    bonusAmount: 0       // 奖励数量
+    bonusAmount: 0,      // 奖励数量
+    showUpdateNotice: false,  // 是否显示更新公告
+    updateInfo: null     // 更新信息
   },
 
   onLoad() {
@@ -60,7 +63,7 @@ Page({
   loadFonts() {
     const fontPromises = [
       this.loadFont('Fredoka One', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/FredokaOne-Regular.ttf'),
-      this.loadFont('江城圆体', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/JiangChengYuanTi-700W-subset.ttf'),
+      this.loadFont('江城圆体', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/JiangChengYuanTi-700W-subset.woff2'),
       this.loadFont('Protest Strike', 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/ProtestStrike.ttf')
     ];
     return Promise.all(fontPromises);
@@ -80,6 +83,13 @@ Page({
         this.showBonusToast(bonus);
       }, 300);
     }
+
+    // 检查是否需要显示更新公告
+    if (changelog.shouldShowUpdateNotice()) {
+      setTimeout(() => {
+        this.showUpdateNotice();
+      }, 500);
+    }
   },
 
   /**
@@ -98,6 +108,26 @@ Page({
     setTimeout(() => {
       this.setData({ showBonusToast: false });
     }, 2000);
+  },
+
+  /**
+   * 显示更新公告
+   */
+  showUpdateNotice() {
+    const updateInfo = changelog.getLatestVersionInfo();
+    this.setData({
+      showUpdateNotice: true,
+      updateInfo
+    });
+  },
+
+  /**
+   * 关闭更新公告
+   */
+  closeUpdateNotice() {
+    this.vibrateShort();
+    changelog.markVersionSeen();
+    this.setData({ showUpdateNotice: false });
   },
 
   /**

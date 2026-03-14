@@ -7,6 +7,7 @@
     "page/song/song",
     "page/profile/profile",
     "page/settings/settings",
+    "page/changelog/changelog",
     "page/audio-test/audio-test"
   ],
   "window": {
