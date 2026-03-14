@@ -454,3 +454,25 @@ page {
 .login-confirm-btn::after {
   border: none;
 }
+
+/* 取消按钮 */
+.login-cancel-btn {
+  margin-top: 20rpx;
+  width: 100%;
+  height: 80rpx;
+  background-color: transparent;
+  border: 2rpx solid #535353;
+  border-radius: 16rpx;
+  font-family: '江城圆体', sans-serif;
+  font-size: 28rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.login-cancel-btn::after {
+  border: none;
+}

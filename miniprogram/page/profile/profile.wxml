@@ -7,7 +7,7 @@
   <!-- 顶部两卡片 -->
   <view class="top-cards">
     <!-- 头像卡片 -->
-    <view class="avatar-card">
+    <view class="avatar-card" bindtap="onAvatarCardTap">
       <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
       <text class="username">{{userInfo.nickName}}</text>
     </view>
@@ -68,15 +68,15 @@
   </view>
 </view>
 
-<!-- 登录弹窗 -->
+<!-- 登录/编辑资料弹窗 -->
 <view class="login-modal" wx:if="{{showLoginModal}}">
   <view class="login-modal-content">
-    <text class="login-title">欢迎使用 Chordiio</text>
-    <text class="login-desc">请设置你的头像和昵称</text>
+    <text class="login-title">{{isEditMode ? '编辑资料' : '欢迎使用 Chordiio'}}</text>
+    <text class="login-desc">{{isEditMode ? '修改你的头像和昵称' : '请设置你的头像和昵称'}}</text>
 
     <!-- 头像选择 -->
     <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-      <image class="avatar-preview" src="{{tempAvatarUrl || '/assets/images/default-avatar.svg'}}" mode="aspectFill"></image>
+      <image class="avatar-preview" src="{{tempAvatarUrl || userInfo.avatarUrl || '/assets/images/default-avatar.svg'}}" mode="aspectFill"></image>
       <text class="avatar-hint">点击选择头像</text>
     </button>
 
@@ -86,6 +86,9 @@
     </view>
 
     <!-- 确认按钮 -->
-    <button class="login-confirm-btn" bindtap="onConfirmLogin">开始使用</button>
+    <button class="login-confirm-btn" bindtap="onConfirmLogin">{{isEditMode ? '保存' : '开始使用'}}</button>
+
+    <!-- 取消按钮（编辑模式显示） -->
+    <button wx:if="{{isEditMode}}" class="login-cancel-btn" bindtap="onCancelEdit">取消</button>
   </view>
 </view>

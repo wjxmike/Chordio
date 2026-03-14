@@ -18,6 +18,7 @@ Page({
     monthNameEN: '',
     calendarDays: [],  // [{day: 1, used: false}, ...]
     showLoginModal: false,  // 是否显示登录弹窗
+    isEditMode: false,      // 是否为编辑模式
     tempAvatarUrl: '',      // 临时头像
     tempNickName: ''        // 临时昵称
   },
@@ -65,8 +66,22 @@ Page({
       this.setData({ userInfo });
     } else {
       // 未登录，显示登录弹窗
-      this.setData({ showLoginModal: true });
+      this.setData({ showLoginModal: true, isEditMode: false });
     }
+  },
+
+  /**
+   * 点击头像卡片 - 进入编辑模式
+   */
+  onAvatarCardTap() {
+    wx.vibrateShort({ type: 'light' });
+    const { userInfo } = this.data;
+    this.setData({
+      showLoginModal: true,
+      isEditMode: true,
+      tempAvatarUrl: userInfo.avatarUrl,
+      tempNickName: userInfo.nickName
+    });
   },
 
   /**
@@ -94,12 +109,16 @@ Page({
   },
 
   /**
-   * 确认登录
+   * 确认登录/保存修改
    */
   onConfirmLogin() {
-    const { tempAvatarUrl, tempNickName } = this.data;
+    const { tempAvatarUrl, tempNickName, isEditMode, userInfo } = this.data;
 
-    if (!tempAvatarUrl) {
+    // 编辑模式下如果没有修改，使用原值
+    const avatarUrl = tempAvatarUrl || (isEditMode ? userInfo.avatarUrl : '');
+    const nickName = tempNickName || (isEditMode ? userInfo.nickName : '');
+
+    if (!avatarUrl) {
       wx.showToast({
         title: '请选择头像',
         icon: 'none'
@@ -107,7 +126,7 @@ Page({
       return;
     }
 
-    if (!tempNickName) {
+    if (!nickName) {
       wx.showToast({
         title: '请输入昵称',
         icon: 'none'
@@ -115,23 +134,36 @@ Page({
       return;
     }
 
-    const userInfo = {
-      avatarUrl: tempAvatarUrl,
-      nickName: tempNickName,
+    const newUserInfo = {
+      avatarUrl,
+      nickName,
       isLoggedIn: true
     };
 
     this.setData({
-      userInfo,
+      userInfo: newUserInfo,
       showLoginModal: false,
+      isEditMode: false,
       tempAvatarUrl: '',
       tempNickName: ''
     });
 
-    wx.setStorageSync('userInfo', userInfo);
+    wx.setStorageSync('userInfo', newUserInfo);
     wx.showToast({
-      title: '设置成功',
+      title: isEditMode ? '保存成功' : '设置成功',
       icon: 'success'
+    });
+  },
+
+  /**
+   * 取消编辑
+   */
+  onCancelEdit() {
+    this.setData({
+      showLoginModal: false,
+      isEditMode: false,
+      tempAvatarUrl: '',
+      tempNickName: ''
     });
   },
 

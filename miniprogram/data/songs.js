@@ -76,22 +76,78 @@ const SONGS = {
     artist: 'Adele',
     album: '25',
     cover: `${CLOUD_BASE}/covers/10.jpeg`
+  },
+  '11': {
+    id: '11',
+    title: '5:10 a.m.',
+    artist: '傻子與白痴',
+    album: '夜场梦少',
+    cover: `${CLOUD_BASE}/covers/11.jpeg`
+  },
+  '12': {
+    id: '12',
+    title: 'Changes',
+    artist: 'Charlie Puth',
+    album: 'Changes',
+    cover: `${CLOUD_BASE}/covers/12.jpeg`
+  },
+  '13': {
+    id: '13',
+    title: 'Lose Control',
+    artist: 'Teddy Swims',
+    album: 'Lose Control',
+    cover: `${CLOUD_BASE}/covers/13.jpeg`
+  },
+  '14': {
+    id: '14',
+    title: 'Messy',
+    artist: 'Lola Young',
+    album: 'Messy',
+    cover: `${CLOUD_BASE}/covers/14.jpeg`
+  },
+  '15': {
+    id: '15',
+    title: 'Mojito',
+    artist: 'Jay Chou',
+    album: '最伟大的作品',
+    cover: `${CLOUD_BASE}/covers/15.jpeg`
+  },
+  '16': {
+    id: '16',
+    title: 'Replay',
+    artist: 'SHINee',
+    album: 'The SHINee World',
+    cover: `${CLOUD_BASE}/covers/16.jpeg`
+  },
+  '17': {
+    id: '17',
+    title: 'Rolling in the Deep',
+    artist: 'Adele',
+    album: '21',
+    cover: `${CLOUD_BASE}/covers/17.jpeg`
+  },
+  '18': {
+    id: '18',
+    title: 'Satisfied',
+    artist: 'Renée Elise Goldsberry',
+    album: 'Hamilton',
+    cover: `${CLOUD_BASE}/covers/18.jpeg`
+  },
+  '19': {
+    id: '19',
+    title: '你要的全拿走',
+    artist: '胡彦斌',
+    album: '覅忒好',
+    cover: `${CLOUD_BASE}/covers/19.jpeg`
+  },
+  '20': {
+    id: '20',
+    title: '王妃',
+    artist: '萧敬腾',
+    album: '王妃',
+    cover: `${CLOUD_BASE}/covers/20.jpeg`
   }
 };
-
-// 和弦记号转换：CSV -> 系统内部
-function convertChordSymbol(symbol) {
-  const map = {
-    'IM7': 'I△7',
-    'IVM7': 'IV△7',
-    'iiM7': 'ii△7',
-    'ii-7': 'ii-7',
-    'iii-7': 'iii-7',
-    'vi-7': 'vi-7',
-    'v-7': 'v-7'
-  };
-  return map[symbol] || symbol;
-}
 
 // 题目列表
 const QUESTIONS = [
@@ -218,7 +274,7 @@ const QUESTIONS = [
     songId: '7',
     audio: `${CLOUD_BASE}/song-audio/7-1.mp3`,
     rootNote: 'F',
-    isMinor: true,  // Fm = F 小调
+    isMinor: true,
     progression: ['i', 'VI', 'III', 'V7']
   },
   {
@@ -226,7 +282,7 @@ const QUESTIONS = [
     songId: '7',
     audio: `${CLOUD_BASE}/song-audio/7-2.mp3`,
     rootNote: 'F',
-    isMinor: true,  // Fm = F 小调
+    isMinor: true,
     progression: ['VI', 'III', 'V', 'i', 'VII']
   },
 
@@ -283,6 +339,198 @@ const QUESTIONS = [
     audio: `${CLOUD_BASE}/song-audio/10-3.mp3`,
     rootNote: 'Eb',
     progression: ['I', 'iii', 'IV', 'V']
+  },
+
+  // 11. 5:10 a.m. - 傻子與白痴
+  {
+    id: '11-1',
+    songId: '11',
+    audio: `${CLOUD_BASE}/song-audio/11-1.mp3`,
+    rootNote: 'F',
+    progression: ['iii', 'ii', 'I', 'III7']
+  },
+  {
+    id: '11-2',
+    songId: '11',
+    audio: `${CLOUD_BASE}/song-audio/11-2.mp3`,
+    rootNote: 'F',
+    progression: ['IV', 'V', 'III7', 'vi']
+  },
+
+  // 12. Changes - Charlie Puth
+  {
+    id: '12-1',
+    songId: '12',
+    audio: `${CLOUD_BASE}/song-audio/12-1.mp3`,
+    rootNote: 'F',
+    progression: ['I', 'V', 'IV', 'V']
+  },
+  {
+    id: '12-2',
+    songId: '12',
+    audio: `${CLOUD_BASE}/song-audio/12-2.mp3`,
+    rootNote: 'F',
+    progression: ['V', 'ii-7', 'IV△7', 'vi-7']
+  },
+  {
+    id: '12-3',
+    songId: '12',
+    audio: `${CLOUD_BASE}/song-audio/12-3.mp3`,
+    rootNote: 'F',
+    progression: ['ii-7', 'iii-7', 'ii-7', 'IV']
+  },
+
+  // 13. Lose Control - Teddy Swims
+  {
+    id: '13-1',
+    songId: '13',
+    audio: `${CLOUD_BASE}/song-audio/13-1.mp3`,
+    rootNote: 'A',
+    progression: ['iv', 'I△7']
+  },
+  {
+    id: '13-2',
+    songId: '13',
+    audio: `${CLOUD_BASE}/song-audio/13-2.mp3`,
+    rootNote: 'A',
+    progression: ['iv', 'I']
+  },
+
+  // 14. Messy - Lola Young
+  {
+    id: '14-1',
+    songId: '14',
+    audio: `${CLOUD_BASE}/song-audio/14-1.mp3`,
+    rootNote: 'A',
+    progression: ['IV', 'V']
+  },
+  {
+    id: '14-2',
+    songId: '14',
+    audio: `${CLOUD_BASE}/song-audio/14-2.mp3`,
+    rootNote: 'A',
+    progression: ['IV△7', 'V']
+  },
+  {
+    id: '14-3',
+    songId: '14',
+    audio: `${CLOUD_BASE}/song-audio/14-3.mp3`,
+    rootNote: 'A',
+    progression: ['IV△7', 'V']
+  },
+
+  // 15. Mojito - Jay Chou (Am 小调)
+  {
+    id: '15-1',
+    songId: '15',
+    audio: `${CLOUD_BASE}/song-audio/15-1.mp3`,
+    rootNote: 'A',
+    isMinor: true,
+    progression: ['iv-7', 'V7', 'i']
+  },
+  {
+    id: '15-2',
+    songId: '15',
+    audio: `${CLOUD_BASE}/song-audio/15-2.mp3`,
+    rootNote: 'A',
+    isMinor: true,
+    progression: ['iv', 'V7', 'i']
+  },
+
+  // 16. Replay - SHINee
+  {
+    id: '16-1',
+    songId: '16',
+    audio: `${CLOUD_BASE}/song-audio/16-1.mp3`,
+    rootNote: 'Ab',
+    progression: ['IV', 'V', 'vi', 'IV']
+  },
+  {
+    id: '16-2',
+    songId: '16',
+    audio: `${CLOUD_BASE}/song-audio/16-2.mp3`,
+    rootNote: 'Ab',
+    progression: ['IV', 'V', 'vi', 'IV']
+  },
+
+  // 17. Rolling in the Deep - Adele (Cm 小调)
+  {
+    id: '17-1',
+    songId: '17',
+    audio: `${CLOUD_BASE}/song-audio/17-1.mp3`,
+    rootNote: 'C',
+    isMinor: true,
+    progression: ['i', 'v', 'VII', 'v', 'VII']
+  },
+  {
+    id: '17-2',
+    songId: '17',
+    audio: `${CLOUD_BASE}/song-audio/17-2.mp3`,
+    rootNote: 'C',
+    isMinor: true,
+    progression: ['i', 'VII', 'VI', 'VII']
+  },
+
+  // 18. Satisfied - Renée Elise Goldsberry (Cm 小调)
+  {
+    id: '18-1',
+    songId: '18',
+    audio: `${CLOUD_BASE}/song-audio/18-1.mp3`,
+    rootNote: 'C',
+    isMinor: true,
+    progression: ['i', 'III', 'iv']
+  },
+  {
+    id: '18-2',
+    songId: '18',
+    audio: `${CLOUD_BASE}/song-audio/18-2.mp3`,
+    rootNote: 'C',
+    isMinor: true,
+    progression: ['i', 'III']
+  },
+
+  // 19. 你要的全拿走 - 胡彦斌 (Em 小调)
+  {
+    id: '19-1',
+    songId: '19',
+    audio: `${CLOUD_BASE}/song-audio/19-1.mp3`,
+    rootNote: 'E',
+    isMinor: true,
+    progression: ['I', 'iv', 'I', 'iv']
+  },
+  {
+    id: '19-2',
+    songId: '19',
+    audio: `${CLOUD_BASE}/song-audio/19-2.mp3`,
+    rootNote: 'E',
+    isMinor: true,
+    progression: ['IV△7', 'I△7', 'ii-7']
+  },
+  {
+    id: '19-3',
+    songId: '19',
+    audio: `${CLOUD_BASE}/song-audio/19-3.mp3`,
+    rootNote: 'E',
+    isMinor: true,
+    progression: ['iv-7', 'V', 'IV']
+  },
+
+  // 20. 王妃 - 萧敬腾 (#Fm 小调)
+  {
+    id: '20-1',
+    songId: '20',
+    audio: `${CLOUD_BASE}/song-audio/20-1.mp3`,
+    rootNote: 'F#',
+    isMinor: true,
+    progression: ['i', 'v', 'i']
+  },
+  {
+    id: '20-2',
+    songId: '20',
+    audio: `${CLOUD_BASE}/song-audio/20-2.mp3`,
+    rootNote: 'F#',
+    isMinor: true,
+    progression: ['i', 'VI', 'VII', 'III']
   }
 ];
 

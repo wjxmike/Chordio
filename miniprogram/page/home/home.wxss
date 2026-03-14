@@ -151,8 +151,8 @@ page {
   justify-content: flex-start;
   gap: 40rpx;
   padding-top: 45rpx;
-  padding-left: 48rpx;
-  padding-right: 48rpx;
+  padding-left: 60rpx;
+  padding-right: 60rpx;
   box-sizing: border-box;
 }
 
@@ -185,11 +185,19 @@ page {
   height: 364rpx;
 }
 
+.mode-card--small .card-title-en {
+  font-size: 35rpx;
+}
+
+.mode-card--small .card-title-cn {
+  font-size: 43rpx;
+}
+
 /* 大卡片 (Songs) - 填充剩余空间 */
 .mode-card--large {
   width: 100%;
   flex: 1;
-  margin-bottom: 200rpx;  /* 为底部导航栏留空间 */
+  margin-bottom: 220rpx;  /* 为底部导航栏留空间 */
 }
 
 .mode-card--hover {

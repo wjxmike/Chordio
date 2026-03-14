@@ -104,8 +104,8 @@ Page({
       }
     });
 
-    // 选择题目：最多10题，每首歌只出现一次
-    this._shuffledQuestions = this.selectUniqueSongQuestions(10);
+    // 选择题目：最多10题，题目不重复但歌曲可以重复
+    this._shuffledQuestions = this.selectQuestions(10);
     this.setData({ totalQuestions: this._shuffledQuestions.length });
 
     // 生成第一题
@@ -113,28 +113,17 @@ Page({
   },
 
   /**
-   * 选择题目，确保每首歌只出现一次
+   * 选择题目，题目不重复但歌曲可以重复出现
    * @param {number} maxQuestions 最多题目数量
    */
-  selectUniqueSongQuestions(maxQuestions) {
+  selectQuestions(maxQuestions) {
     const allQuestions = songs.getAllQuestions();
-    const usedSongs = new Set();
-    const selected = [];
 
-    // 先打乱所有题目
+    // 打乱所有题目
     const shuffled = this.shuffleArray([...allQuestions]);
 
-    // 按顺序选择，跳过已选过的歌曲
-    for (const q of shuffled) {
-      if (!usedSongs.has(q.songId)) {
-        selected.push(q);
-        usedSongs.add(q.songId);
-        if (selected.length >= maxQuestions) break;
-      }
-    }
-
-    // 再次打乱选中题目的顺序
-    return this.shuffleArray(selected);
+    // 直接选择前 maxQuestions 道题目（题目不重复）
+    return shuffled.slice(0, Math.min(maxQuestions, shuffled.length));
   },
 
   onReady() {
