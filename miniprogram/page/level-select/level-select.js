@@ -2,6 +2,8 @@
  * 关卡选择页
  */
 
+const playCount = require('../../utils/play-count');
+
 Page({
   data: {
     levels: [
@@ -96,6 +98,25 @@ Page({
       });
       return;
     }
+
+    // 检查并扣除能量
+    if (!playCount.canPlay()) {
+      wx.showModal({
+        title: '能量不足',
+        content: '今日免费能量已用完，分享给好友可获得额外3点能量',
+        confirmText: '去分享',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateBack();
+          }
+        }
+      });
+      return;
+    }
+
+    // 扣除能量
+    playCount.useCount();
 
     // 跳转到练习页，传递关卡参数
     wx.navigateTo({

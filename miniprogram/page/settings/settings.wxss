@@ -1,0 +1,175 @@
+/* Settings 页面样式 */
+
+page {
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1C1C1C;
+}
+
+.settings-container {
+  position: relative;
+  background-color: #1C1C1C;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Logo 区域 */
+.logo-section {
+  margin-top: 250rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  width: 114rpx;
+  height: 136rpx;
+}
+
+.app-name {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 64rpx;
+  color: #FFFFFF;
+  letter-spacing: 3.2rpx;
+  text-align: center;
+  margin-top: 10rpx;
+}
+
+/* 关于卡片 */
+.about-card {
+  margin-top: 70rpx;
+  width: 606rpx;
+  height: 900rpx;
+  background-color: #1C1C1C;
+  border: 4rpx solid #535353;
+  border-radius: 20rpx;
+  box-shadow: 0 10rpx 0 rgba(83, 83, 83, 0.35);
+  padding: 48rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.about-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.about-title {
+  font-family: '江城圆体', sans-serif;
+  font-size: 32rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.6rpx;
+  margin-bottom: 32rpx;
+}
+
+.about-text {
+  font-family: '江城圆体', sans-serif;
+  font-size: 26rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.3rpx;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.about-text.highlight {
+  color: #9A9A9A;
+}
+
+.version-text {
+  font-family: '江城圆体', sans-serif;
+  font-size: 26rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.3rpx;
+  text-align: center;
+  margin-top: 32rpx;
+}
+
+/* 开发中功能 */
+.dev-features {
+  margin-top: 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.features-title {
+  font-family: '江城圆体', sans-serif;
+  font-size: 26rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.3rpx;
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+
+.features-item {
+  font-family: '江城圆体', sans-serif;
+  font-size: 26rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.3rpx;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* 联系方式 */
+.contact-section {
+  margin-top: 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.contact-text {
+  font-family: '江城圆体', sans-serif;
+  font-size: 26rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.3rpx;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* 留言按钮 */
+.feedback-btn {
+  margin-top: 0rpx;
+  width: 178rpx;
+  height: 66rpx;
+  background-color: #353535;
+  border: 2rpx solid #535353;
+  border-radius: 20rpx;
+  font-family: '江城圆体', sans-serif;
+  font-size: 28rpx;
+  color: #9A9A9A;
+  letter-spacing: 1.4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.feedback-btn::after {
+  border: none;
+}
+
+/* 返回按钮 */
+.back-btn {
+  position: absolute;
+  left: 48rpx;
+  top: 100rpx;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  width: 48rpx;
+  height: 48rpx;
+}

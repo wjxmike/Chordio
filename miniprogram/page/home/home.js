@@ -4,13 +4,17 @@
  */
 
 const app = getApp();
+const playCount = require('../../utils/play-count');
 
 Page({
   data: {
     showSplash: true,    // 是否显示启动页
     fontsLoaded: false,  // 字体是否加载完成
-    streak: 12,          // 连续练习天数
-    selectedMode: null   // 当前选中的模式
+    streak: 0,           // 连续练习天数
+    remainingCount: 5,   // 剩余能量
+    selectedMode: null,  // 当前选中的模式
+    showBonusToast: false,  // 是否显示奖励浮窗
+    bonusAmount: 0       // 奖励数量
   },
 
   onLoad() {
@@ -63,8 +67,37 @@ Page({
   },
 
   onShow() {
-    // 返回首页时重置选中状态
-    this.setData({ selectedMode: null });
+    // 返回首页时重置选中状态并刷新数据
+    this.loadStreak();
+    const remainingCount = playCount.getRemainingCount();
+    this.setData({ selectedMode: null, remainingCount });
+
+    // 检查待发放的分享奖励
+    const bonus = playCount.checkAndGrantPendingBonus();
+    if (bonus > 0) {
+      // 延迟一下再显示，让页面先稳定
+      setTimeout(() => {
+        this.showBonusToast(bonus);
+      }, 300);
+    }
+  },
+
+  /**
+   * 显示奖励浮窗
+   * @param {number} amount 奖励数量
+   */
+  showBonusToast(amount) {
+    const remainingCount = playCount.getRemainingCount();
+    this.setData({
+      showBonusToast: true,
+      bonusAmount: amount,
+      remainingCount
+    });
+
+    // 2秒后自动消失
+    setTimeout(() => {
+      this.setData({ showBonusToast: false });
+    }, 2000);
   },
 
   /**
@@ -96,45 +129,74 @@ Page({
   },
 
   /**
+   * 检查能量并跳转
+   * @param {string} url 目标页面
+   * @param {string} mode 模式名称
+   * @param {boolean} deductNow 是否立即扣除能量（默认 true）
+   */
+  checkAndNavigate(url, mode, deductNow = true) {
+    if (!playCount.canPlay()) {
+      this.showNoCountModal();
+      return;
+    }
+
+    // 如果需要立即扣除（挑战/歌曲模式）
+    if (deductNow) {
+      playCount.useCount();
+      const remainingCount = playCount.getRemainingCount();
+      this.setData({ remainingCount });
+    }
+
+    this.vibrateShort();
+    this.setData({ selectedMode: mode });
+
+    setTimeout(() => {
+      wx.navigateTo({ url });
+    }, 150);
+  },
+
+  /**
+   * 显示能量不足弹窗
+   */
+  showNoCountModal() {
+    wx.showModal({
+      title: '能量不足',
+      content: '今日免费能量已用完，分享给好友可获得额外3点能量',
+      confirmText: '分享',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 触发分享（用户需要点击右上角分享）
+          wx.showModal({
+            title: '分享成功',
+            content: '请点击右上角「...」分享给好友',
+            showCancel: false
+          });
+        }
+      }
+    });
+  },
+
+  /**
    * 点击 Practice 模式
    */
   onPracticeTap() {
-    this.vibrateShort();
-    this.setData({ selectedMode: 'practice' });
-
-    setTimeout(() => {
-      wx.navigateTo({
-        url: '/page/level-select/level-select'
-      });
-    }, 150);
+    // 练习模式：只检查能量，进入具体关卡时才扣除
+    this.checkAndNavigate('/page/level-select/level-select', 'practice', false);
   },
 
   /**
    * 点击 Challenge 模式
    */
   onChallengeTap() {
-    this.vibrateShort();
-    this.setData({ selectedMode: 'challenge' });
-
-    setTimeout(() => {
-      wx.navigateTo({
-        url: '/page/challenge/challenge'
-      });
-    }, 150);
+    this.checkAndNavigate('/page/challenge/challenge', 'challenge');
   },
 
   /**
    * 点击 Songs 模式
    */
   onSongsTap() {
-    this.vibrateShort();
-    this.setData({ selectedMode: 'songs' });
-
-    setTimeout(() => {
-      wx.navigateTo({
-        url: '/page/song/song'
-      });
-    }, 150);
+    this.checkAndNavigate('/page/song/song', 'songs');
   },
 
   /**
@@ -170,5 +232,57 @@ Page({
     wx.vibrateShort({
       type: 'light'
     });
+  },
+
+  /**
+   * 点击 Streak（简短版提示）
+   */
+  onStreakTap() {
+    this.vibrateShort();
+    wx.showModal({
+      title: '连续练习',
+      content: `连续练习 ${this.data.streak} 天！每天至少完成一次练习即可保持连续记录 🔥`,
+      showCancel: false,
+      confirmText: '知道了'
+    });
+  },
+
+  /**
+   * 点击能量（简短版提示）
+   */
+  onCountTap() {
+    this.vibrateShort();
+    wx.showModal({
+      title: '剩余能量',
+      content: `今日剩余 ${this.data.remainingCount} 点能量，分享给好友可获得额外 3 点 ⚡`,
+      showCancel: false,
+      confirmText: '知道了'
+    });
+  },
+
+  /**
+   * 分享到好友/群聊
+   */
+  onShareAppMessage() {
+    // 标记待发放奖励（返回时发放）
+    playCount.markPendingBonus();
+
+    return {
+      title: 'Chordiio：听和弦练习小程序',
+      path: '/page/home/home'
+    };
+  },
+
+  /**
+   * 分享到朋友圈
+   */
+  onShareTimeline() {
+    // 标记待发放奖励（返回时发放）
+    playCount.markPendingBonus();
+
+    return {
+      title: 'Chordiio：听和弦练习小程序',
+      query: ''
+    };
   }
 });

@@ -5,6 +5,7 @@
 
 const chords = require('../../utils/chords');
 const audio = require('../../utils/audio');
+const playCount = require('../../utils/play-count');
 
 // 难度配置
 const DIFFICULTY_CONFIG = {
@@ -44,6 +45,11 @@ Page({
   _currentBlanks: 1,
 
   onLoad() {
+    // 启用退出提示
+    wx.enableAlertBeforeUnload({
+      message: '挑战中途退出将不会返还能量，确定要退出吗？'
+    });
+
     // 加载自定义字体
     wx.loadFontFace({
       family: 'Fredoka One',
@@ -194,6 +200,8 @@ Page({
       hearts[hearts.findIndex(h => h)] = false;
       this.setData({ hearts, gameOver: true });
       this.stopTimer();
+      // 游戏结束，禁用退出提示
+      wx.disableAlertBeforeUnload();
       this.showGameOver();
       return;
     }
@@ -430,20 +438,42 @@ Page({
       wx.setStorageSync('challengeBestScore', score);
     }
 
-    wx.showModal({
-      title: '游戏结束',
-      content: `最终得分：${score}分\n最高记录：${Math.max(score, bestScore)}分`,
-      showCancel: true,
-      cancelText: '返回',
-      confirmText: '再来一次',
-      success: (res) => {
-        if (res.confirm) {
-          this.restartGame();
-        } else {
-          wx.navigateBack();
+    // 检查剩余能量
+    const remainingCount = playCount.getRemainingCount();
+    const noMoreCount = remainingCount === 0;
+
+    if (noMoreCount) {
+      // 能量用完，提示分享
+      wx.showModal({
+        title: '游戏结束',
+        content: `最终得分：${score}分\n最高记录：${Math.max(score, bestScore)}分\n\n⚠️ 今日能量已用完，分享给好友可获得额外 3 点能量`,
+        showCancel: true,
+        cancelText: '稍后再说',
+        confirmText: '去分享',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateBack({ delta: 2 });
+          } else {
+            wx.navigateBack();
+          }
         }
-      }
-    });
+      });
+    } else {
+      wx.showModal({
+        title: '游戏结束',
+        content: `最终得分：${score}分\n最高记录：${Math.max(score, bestScore)}分\n\n剩余能量：${remainingCount}`,
+        showCancel: true,
+        cancelText: '返回',
+        confirmText: '再来一次',
+        success: (res) => {
+          if (res.confirm) {
+            this.restartGame();
+          } else {
+            wx.navigateBack();
+          }
+        }
+      });
+    }
   },
 
   /**

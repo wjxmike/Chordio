@@ -5,6 +5,7 @@
 
 const chords = require('../../utils/chords');
 const audio = require('../../utils/audio');
+const playCount = require('../../utils/play-count');
 
 // 预加载钢琴采样
 audio.initPiano();
@@ -48,6 +49,11 @@ Page({
   },
 
   onLoad(options) {
+    // 启用退出提示
+    wx.enableAlertBeforeUnload({
+      message: '练习中途退出将不会返还能量，确定要退出吗？'
+    });
+
     // 获取关卡参数
     const level = options.level || 'triads';
     const levelName = LEVEL_NAMES[level] || '三和弦';
@@ -281,6 +287,9 @@ Page({
    * 显示结果并保存进度
    */
   showResult() {
+    // 练习完成，禁用退出提示
+    wx.disableAlertBeforeUnload();
+
     const { correctCount, totalQuestions, level } = this.data;
     const percentage = Math.round((correctCount / totalQuestions) * 100);
     const isPerfect = percentage === 100;
@@ -298,11 +307,32 @@ Page({
       }
     }
 
-    if (isPerfect) {
+    // 检查剩余能量
+    const remainingCount = playCount.getRemainingCount();
+    const noMoreCount = remainingCount === 0;
+
+    if (noMoreCount) {
+      // 能量用完，提示分享
+      wx.showModal({
+        title: '练习完成！',
+        content: `正确率：${percentage}% (${correctCount}/${totalQuestions})${unlockMessage}\n\n⚠️ 今日能量已用完，分享给好友可获得额外 3 点能量`,
+        showCancel: true,
+        cancelText: '稍后再说',
+        confirmText: '去分享',
+        success: (res) => {
+          if (res.confirm) {
+            // 返回首页进行分享
+            wx.navigateBack({ delta: 2 });
+          } else {
+            wx.navigateBack();
+          }
+        }
+      });
+    } else if (isPerfect) {
       // 100% 正确率：只显示"完成"按钮
       wx.showModal({
         title: '练习完成！',
-        content: `正确率：${percentage}% (${correctCount}/${totalQuestions})${unlockMessage}`,
+        content: `正确率：${percentage}% (${correctCount}/${totalQuestions})${unlockMessage}\n\n剩余能量：${remainingCount}`,
         showCancel: false,
         confirmText: '完成',
         success: () => {
@@ -312,14 +342,16 @@ Page({
       });
     } else {
       // 未达 100%：显示"返回"和"再来一次"
+      // 检查是否还有能量继续练习
+      const canRetry = remainingCount > 0;
       wx.showModal({
         title: '练习完成！',
-        content: `正确率：${percentage}% (${correctCount}/${totalQuestions})\n需要 100% 正确率才能解锁下一关`,
+        content: `正确率：${percentage}% (${correctCount}/${totalQuestions})\n需要 100% 正确率才能解锁下一关\n\n剩余能量：${remainingCount}`,
         showCancel: true,
         cancelText: '返回',
-        confirmText: '再来一次',
+        confirmText: canRetry ? '再来一次' : '返回',
         success: (res) => {
-          if (res.confirm) {
+          if (res.confirm && canRetry) {
             // 重新开始
             const rootNote = chords.randomRootNote();
             this.setData({

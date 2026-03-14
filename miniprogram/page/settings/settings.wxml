@@ -1,0 +1,43 @@
+<view class="settings-container">
+  <!-- 返回按钮 -->
+  <view class="back-btn" bindtap="onBackTap">
+    <image class="back-icon" src="/assets/images/back.svg" mode="aspectFit"></image>
+  </view>
+
+  <!-- Logo -->
+  <view class="logo-section">
+    <image class="logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
+    <text class="app-name">Chordiio</text>
+  </view>
+
+  <!-- 关于卡片 -->
+  <view class="about-card">
+    <view class="about-content">
+      <text class="about-title">致谢</text>
+
+      <text class="about-text">感谢你使用 Chordiio！</text>
+      <text class="about-text">这是一款由独立开发者</text>
+      <text class="about-text highlight">@靖轩不懂音乐</text>
+      <text class="about-text">制作的听音练习工具</text>
+
+      <text class="version-text">当前版本 v1.1.0 Beta</text>
+
+      <view class="dev-features">
+        <text class="features-title">开发中功能</text>
+        <text class="features-item">- 好友排行榜</text>
+        <text class="features-item">- 歌曲曲库扩充</text>
+        <text class="features-item">- 练习数据分析</text>
+      </view>
+
+      <view class="contact-section">
+        <text class="contact-text">有任何建议或反馈，欢迎联系</text>
+        <text class="contact-text">vx：jingxuan_wjx</text>
+        <text class="contact-text">小红书/抖音/B站：@靖轩不懂音乐</text>
+        <text class="contact-text">或直接下方留言</text>
+      </view>
+    </view>
+
+    <!-- 留言按钮 -->
+    <button class="feedback-btn" open-type="contact">留言</button>
+  </view>
+</view>

@@ -10,7 +10,7 @@
     "page/audio-test/audio-test"
   ],
   "window": {
-    "navigationBarTitleText": "Chordio",
+    "navigationBarTitleText": "Chordiio",
     "navigationBarBackgroundColor": "#1C1C1C",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#1C1C1C"

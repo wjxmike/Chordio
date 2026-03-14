@@ -6,6 +6,7 @@
 const songs = require('../../data/songs');
 const chords = require('../../utils/chords');
 const audio = require('../../utils/audio');
+const playCount = require('../../utils/play-count');
 
 // 预加载钢琴采样
 audio.initPiano();
@@ -48,6 +49,11 @@ Page({
   _songAudio: null,
 
   onLoad(options) {
+    // 启用退出提示
+    wx.enableAlertBeforeUnload({
+      message: '练习中途退出将不会返还能量，确定要退出吗？'
+    });
+
     // 加载字体
     wx.loadFontFace({
       family: 'Protest Strike',
@@ -560,18 +566,43 @@ Page({
    * 显示结果
    */
   showResult() {
+    // 练习完成，禁用退出提示
+    wx.disableAlertBeforeUnload();
+
     const { correctCount, totalQuestions } = this.data;
     const percentage = Math.round((correctCount / totalQuestions) * 100);
 
-    wx.showModal({
-      title: '练习完成',
-      content: `答对 ${correctCount}/${totalQuestions} 题\n正确率：${percentage}%`,
-      showCancel: false,
-      confirmText: '返回',
-      success: () => {
-        wx.navigateBack();
-      }
-    });
+    // 检查剩余能量
+    const remainingCount = playCount.getRemainingCount();
+    const noMoreCount = remainingCount === 0;
+
+    if (noMoreCount) {
+      // 能量用完，提示分享
+      wx.showModal({
+        title: '练习完成',
+        content: `答对 ${correctCount}/${totalQuestions} 题\n正确率：${percentage}%\n\n⚠️ 今日能量已用完，分享给好友可获得额外 3 点能量`,
+        showCancel: true,
+        cancelText: '稍后再说',
+        confirmText: '去分享',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateBack({ delta: 2 });
+          } else {
+            wx.navigateBack();
+          }
+        }
+      });
+    } else {
+      wx.showModal({
+        title: '练习完成',
+        content: `答对 ${correctCount}/${totalQuestions} 题\n正确率：${percentage}%\n\n剩余能量：${remainingCount}`,
+        showCancel: false,
+        confirmText: '返回',
+        success: () => {
+          wx.navigateBack();
+        }
+      });
+    }
   },
 
   onUnload() {
@@ -584,5 +615,16 @@ Page({
       clearInterval(this._updateProgressTimer);
     }
     audio.stopCurrentPlayback();
+  },
+
+  /**
+   * 分享到好友/群聊（歌曲模式不支持朋友圈分享）
+   */
+  onShareAppMessage() {
+    const { song } = this.data;
+    return {
+      title: song ? `${song.title} - ${song.artist}` : 'Chordiio - 歌曲模式',
+      path: '/page/home/home'
+    };
   }
 });

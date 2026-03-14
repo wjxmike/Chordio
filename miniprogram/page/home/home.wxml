@@ -3,7 +3,7 @@
   <view class="logo-wrapper">
     <image class="logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
   </view>
-  <text class="app-name-splash {{fontsLoaded ? 'visible' : 'hidden'}}">Chordio</text>
+  <text class="app-name-splash {{fontsLoaded ? 'visible' : 'hidden'}}">Chordiio</text>
   <text class="slogan {{fontsLoaded ? 'visible' : 'hidden'}}">你的听和弦练习伙伴</text>
 </view>
 
@@ -11,29 +11,41 @@
 <view class="home-container {{showSplash ? 'hidden' : 'visible'}}">
   <!-- 顶部标题栏 -->
   <view class="header">
-    <text class="app-name">Chordio</text>
-    <image class="streak-icon" src="/assets/images/fire-icon.png" mode="aspectFit"></image>
-    <text class="streak-number">{{streak}}</text>
+    <text class="app-name">Chordiio</text>
+    <view class="streak-area" bindtap="onStreakTap">
+      <image class="streak-icon" src="/assets/images/fire-icon.png" mode="aspectFit"></image>
+      <text class="streak-number">{{streak}}</text>
+    </view>
+    <view class="count-area" bindtap="onCountTap">
+      <image class="count-icon" src="/assets/images/lightning.svg" mode="aspectFit"></image>
+      <text class="count-number">{{remainingCount}}</text>
+    </view>
   </view>
 
   <!-- 三个模式卡片 -->
   <view class="cards-container">
-    <!-- Practice Mode -->
-    <view class="mode-card {{selectedMode === 'practice' ? 'mode-card--active' : ''}}" bindtap="onPracticeTap" hover-class="mode-card--hover">
-      <text class="card-title-cn">练习模式</text>
-      <text class="card-title-en">Practice</text>
+    <!-- 顶部两卡片并排 -->
+    <view class="cards-row">
+      <!-- Practice Mode -->
+      <view class="mode-card mode-card--small {{selectedMode === 'practice' ? 'mode-card--active' : ''}}" bindtap="onPracticeTap" hover-class="mode-card--hover">
+        <text class="card-title-cn">练习模式</text>
+        <text class="card-title-en">Practice</text>
+      </view>
+
+      <!-- Challenge Mode -->
+      <view class="mode-card mode-card--small {{selectedMode === 'challenge' ? 'mode-card--active' : ''}}" bindtap="onChallengeTap" hover-class="mode-card--hover">
+        <text class="card-title-cn">挑战模式</text>
+        <text class="card-title-en">Challenge</text>
+      </view>
     </view>
 
-    <!-- Challenge Mode -->
-    <view class="mode-card {{selectedMode === 'challenge' ? 'mode-card--active' : ''}}" bindtap="onChallengeTap" hover-class="mode-card--hover">
-      <text class="card-title-cn">挑战模式</text>
-      <text class="card-title-en">Challenge</text>
-    </view>
-
-    <!-- Songs Mode -->
-    <view class="mode-card {{selectedMode === 'songs' ? 'mode-card--active' : ''}}" bindtap="onSongsTap" hover-class="mode-card--hover">
-      <text class="card-title-cn">歌曲模式</text>
-      <text class="card-title-en">Songs</text>
+    <!-- Songs Mode - 大卡片 -->
+    <view class="mode-card mode-card--large {{selectedMode === 'songs' ? 'mode-card--active' : ''}}" bindtap="onSongsTap" hover-class="mode-card--hover">
+      <image class="songs-bg" src="/assets/images/歌曲模式背景.svg" mode="aspectFill"></image>
+      <view class="songs-content">
+        <text class="card-title-cn">歌曲模式</text>
+        <text class="card-title-en">Songs</text>
+      </view>
     </view>
   </view>
 
@@ -54,4 +66,10 @@
   <!-- <view class="test-entry" bindtap="onAudioTestTap">
     <text class="test-entry-text">音频测试</text>
   </view> -->
+</view>
+
+<!-- 奖励浮窗 -->
+<view class="bonus-toast {{showBonusToast ? 'bonus-toast--show' : ''}}">
+  <image class="bonus-toast-icon" src="/assets/images/lightning.svg" mode="aspectFit"></image>
+  <text class="bonus-toast-text">+{{bonusAmount}}</text>
 </view>
