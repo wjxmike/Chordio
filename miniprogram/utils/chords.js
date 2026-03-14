@@ -8,17 +8,26 @@ const progressions = require('./progressions');
 // 12个半音的基准频率（C4到B4）
 const SEMITONE_FREQ = {
   'C': 261.63,
-  'Db': 277.18,
+  'Db': 277.18,  'C#': 277.18,
   'D': 293.66,
-  'Eb': 311.13,
+  'Eb': 311.13,  'D#': 311.13,
   'E': 329.63,
   'F': 349.23,
-  'Gb': 369.99,
+  'Gb': 369.99,  'F#': 369.99,
   'G': 392.00,
-  'Ab': 415.30,
+  'Ab': 415.30,  'G#': 415.30,
   'A': 440.00,
-  'Bb': 466.16,
+  'Bb': 466.16,  'A#': 466.16,
   'B': 493.88
+};
+
+// 升号到降号的映射
+const SHARP_TO_FLAT = {
+  'C#': 'Db',
+  'D#': 'Eb',
+  'F#': 'Gb',
+  'G#': 'Ab',
+  'A#': 'Bb'
 };
 
 // 12个调（使用降号命名）
@@ -30,6 +39,16 @@ const ROOT_FREQUENCIES = SEMITONE_FREQ;
 // 半音顺序（用于计算音阶）
 const SEMITONE_ORDER = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
+/**
+ * 将根音转换为标准名称（升号转降号）
+ */
+function normalizeRootNote(rootNote) {
+  if (SHARP_TO_FLAT[rootNote]) {
+    return SHARP_TO_FLAT[rootNote];
+  }
+  return rootNote;
+}
+
 // 大调音阶的半音步进
 const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
 
@@ -40,7 +59,8 @@ const MINOR_SCALE_INTERVALS = [0, 2, 3, 5, 7, 8, 10];
  * 根据根音获取大调音阶的7个音（半音索引）
  */
 function getMajorScale(rootNote) {
-  const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+  const normalized = normalizeRootNote(rootNote);
+  const rootIndex = SEMITONE_ORDER.indexOf(normalized);
   return MAJOR_SCALE_INTERVALS.map(interval => (rootIndex + interval) % 12);
 }
 
@@ -48,7 +68,8 @@ function getMajorScale(rootNote) {
  * 根据根音获取小调音阶的7个音（半音索引）
  */
 function getMinorScale(rootNote) {
-  const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+  const normalized = normalizeRootNote(rootNote);
+  const rootIndex = SEMITONE_ORDER.indexOf(normalized);
   return MINOR_SCALE_INTERVALS.map(interval => (rootIndex + interval) % 12);
 }
 
@@ -176,7 +197,8 @@ ROOT_NOTES.forEach(root => {
  * 获取混合利底亚调式 (Mixolydian)
  */
 function getMixolydianScale(rootNote) {
-  const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+  const normalized = normalizeRootNote(rootNote);
+  const rootIndex = SEMITONE_ORDER.indexOf(normalized);
   // 1-2-3-4-5-6-b7 = 0,2,4,5,7,9,10
   return [0, 2, 4, 5, 7, 9, 10].map(i => (rootIndex + i) % 12);
 }
@@ -185,7 +207,8 @@ function getMixolydianScale(rootNote) {
  * 获取利底亚调式 (Lydian)
  */
 function getLydianScale(rootNote) {
-  const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+  const normalized = normalizeRootNote(rootNote);
+  const rootIndex = SEMITONE_ORDER.indexOf(normalized);
   // 1-2-3-#4-5-6-7 = 0,2,4,6,7,9,11
   return [0, 2, 4, 6, 7, 9, 11].map(i => (rootIndex + i) % 12);
 }
@@ -194,7 +217,8 @@ function getLydianScale(rootNote) {
  * 获取多里安调式 (Dorian)
  */
 function getDorianScale(rootNote) {
-  const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+  const normalized = normalizeRootNote(rootNote);
+  const rootIndex = SEMITONE_ORDER.indexOf(normalized);
   // 1-2-b3-4-5-6-b7 = 0,2,3,5,7,9,10
   return [0, 2, 3, 5, 7, 9, 10].map(i => (rootIndex + i) % 12);
 }
@@ -295,7 +319,8 @@ function getChromaticFreqs(rootNote, chordSymbol) {
   // #V - 升五级大三和弦
   if (chordSymbol === '#V') {
     // 升五级 = V 级 + 1 个半音
-    const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+    const normalized = normalizeRootNote(rootNote);
+    const rootIndex = SEMITONE_ORDER.indexOf(normalized);
     const sharpVSemitone = (rootIndex + 8) % 12;  // V = 7, #V = 8
     // 大三和弦 = 根音 + 大三度 + 纯五度
     return [
@@ -338,7 +363,8 @@ function getChromaticFreqs(rootNote, chordSymbol) {
   // V - 小调 V 级大三和弦（和声小调）
   if (chordSymbol === 'V' && !borrowedMap['V']) {
     // 和声小调的 V 级是大三和弦
-    const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+    const normalized = normalizeRootNote(rootNote);
+    const rootIndex = SEMITONE_ORDER.indexOf(normalized);
     const vSemitone = (rootIndex + 7) % 12;
     return [
       semitoneToFreq(vSemitone),
@@ -350,7 +376,8 @@ function getChromaticFreqs(rootNote, chordSymbol) {
   // V7 - 小调 V 级属七和弦（和声小调）
   if (chordSymbol === 'V7') {
     // 使用和声小调的属七
-    const rootIndex = SEMITONE_ORDER.indexOf(rootNote);
+    const normalized = normalizeRootNote(rootNote);
+    const rootIndex = SEMITONE_ORDER.indexOf(normalized);
     const vSemitone = (rootIndex + 7) % 12;
     const vName = SEMITONE_ORDER[vSemitone];
     const dominantScale = getMixolydianScale(vName);

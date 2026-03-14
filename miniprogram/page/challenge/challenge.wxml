@@ -18,7 +18,7 @@
 
   <!-- 和弦方块 -->
   <view class="chord-blocks-row">
-    <view wx:for="{{progression}}" wx:key="index" class="chord-block {{item.isBlank ? (pageState === 'correct' ? 'chord-block--correct' : (pageState === 'wrong' ? 'chord-block--wrong' : 'chord-block--blank')) : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
+    <view wx:for="{{progression}}" wx:key="index" class="chord-block {{item.isBlank ? (pageState === 'correct' || item.isUserCorrect ? 'chord-block--correct' : (pageState === 'wrong' && !item.isUserCorrect ? 'chord-block--wrong' : 'chord-block--blank')) : 'chord-block--filled'}}" data-index="{{index}}" bindtap="onBlockTap">
       <rich-text wx:if="{{!item.isBlank}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.symbol)}}"></rich-text>
       <rich-text wx:elif="{{pageState === 'correct'}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.answer)}}"></rich-text>
       <rich-text wx:elif="{{pageState === 'wrong'}}" class="chord-block-text" nodes="{{chordFmt.getNodes(item.answer)}}"></rich-text>

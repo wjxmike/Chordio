@@ -5,8 +5,27 @@
 
 const { getChordFrequencies, ROOT_FREQUENCIES } = require('./chords');
 
-// 半音顺序
+// 半音顺序（降号命名）
 const SEMITONE_ORDER = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+// 升号到降号的映射
+const SHARP_TO_FLAT = {
+  'C#': 'Db',
+  'D#': 'Eb',
+  'F#': 'Gb',
+  'G#': 'Ab',
+  'A#': 'Bb'
+};
+
+/**
+ * 将根音转换为标准名称（升号转降号）
+ */
+function normalizeRootNote(rootNote) {
+  if (SHARP_TO_FLAT[rootNote]) {
+    return SHARP_TO_FLAT[rootNote];
+  }
+  return rootNote;
+}
 
 // Web Audio 上下文
 let audioCtx = null;
@@ -276,7 +295,8 @@ function playPianoChord(frequencies, rootNote) {
  * 获取和弦的根音名称
  */
 function getChordRoot(keyRoot, chordSymbol) {
-  const rootIndex = SEMITONE_ORDER.indexOf(keyRoot);
+  const normalized = normalizeRootNote(keyRoot);
+  const rootIndex = SEMITONE_ORDER.indexOf(normalized);
 
   const triadRoots = {
     'I': 0, 'ii': 1, 'iii': 2, 'IV': 3, 'V': 4, 'vi': 5, 'vii': 6

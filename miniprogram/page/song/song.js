@@ -37,6 +37,7 @@ Page({
     pageState: 'idle',    // 'idle' | 'playing' | 'selected' | 'correct' | 'wrong'
     selectedAnswer: null,
     flashingIndex: null,
+    hasWronged: false,    // 本题是否答错过
 
     // 统计
     correctCount: 0,
@@ -182,6 +183,7 @@ Page({
       pageState: 'playing',
       selectedAnswer: null,
       flashingIndex: null,
+      hasWronged: false,
       isPlaying: false,
       songProgress: 0,
       shouldAutoPlay: false,  // 重置，等待 playSongAudio 设置
@@ -454,7 +456,7 @@ Page({
    * 点击底部按钮
    */
   onBottomButtonTap() {
-    const { pageState, selectedAnswer, correctAnswer } = this.data;
+    const { pageState, hasWronged, selectedAnswer, correctAnswer } = this.data;
 
     if (pageState === 'selected') {
       // 确认答案 - 暂停歌曲播放
@@ -468,11 +470,12 @@ Page({
       if (selectedAnswer === correctAnswer) {
         this.setData({
           pageState: 'correct',
-          correctCount: this.data.correctCount + 1
+          // 只有第一次答对才计入正确数
+          correctCount: hasWronged ? this.data.correctCount : this.data.correctCount + 1
         });
       } else {
-        // 答错：显示 wrong 状态，不自动重置
-        this.setData({ pageState: 'wrong' });
+        // 答错：显示 wrong 状态，标记已答错
+        this.setData({ pageState: 'wrong', hasWronged: true });
       }
       return;
     }
@@ -484,8 +487,8 @@ Page({
       return;
     }
 
-    if (pageState === 'idle') {
-      // 播放根音
+    if (pageState === 'idle' && !hasWronged) {
+      // 播放根音（只有未答错过才能播放）
       this.playRootNoteSine();
     }
   },

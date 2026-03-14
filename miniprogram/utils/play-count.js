@@ -18,15 +18,18 @@ function getTodayString() {
  * @returns {{ date: string, used: number, bonus: number }}
  */
 function getCountData() {
-  const data = wx.getStorageSync('playCount') || { date: getTodayString(), used: 0, bonus: 0 };
+  const stored = wx.getStorageSync('playCount');
+  const today = getTodayString();
 
-  // 如果是新的一天，重置能量
-  if (data.date !== getTodayString()) {
-    data = { date: getTodayString(), used: 0, bonus: 0 };
+  // 如果是新的一天或没有数据，返回初始数据
+  if (!stored || stored.date !== today) {
+    const data = { date: today, used: 0, bonus: 0 };
     wx.setStorageSync('playCount', data);
+    return data;
   }
 
-  return data;
+  // 返回可修改的副本（避免 read-only 错误）
+  return { date: stored.date, used: stored.used, bonus: stored.bonus };
 }
 
 /**

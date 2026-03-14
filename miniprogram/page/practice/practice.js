@@ -210,7 +210,8 @@ Page({
       if (selectedAnswer === correctAnswer) {
         this.setData({
           pageState: 'correct',
-          correctCount: this.data.correctCount + 1
+          // 只有第一次答对才计入正确数
+          correctCount: hasWronged ? this.data.correctCount : this.data.correctCount + 1
         });
       } else {
         this.setData({

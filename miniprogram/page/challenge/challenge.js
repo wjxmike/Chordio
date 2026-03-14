@@ -38,6 +38,7 @@ Page({
     pageState: 'playing',  // 'playing' | 'idle' | 'selected' | 'correct' | 'wrong'
     flashingIndex: null,
     selectedAnswer: null,
+    hasWronged: false,     // 本题是否答错过
   },
 
   // 计时器
@@ -134,6 +135,7 @@ Page({
       pageState: 'playing',
       flashingIndex: null,
       selectedAnswer: null,
+      hasWronged: false,
       timer: config.time,
       maxTime: config.time,
     });
@@ -335,7 +337,7 @@ Page({
    * 底部按钮点击
    */
   onBottomButtonTap() {
-    const { pageState, progression, blankIndices, correctAnswers } = this.data;
+    const { pageState, progression, blankIndices, correctAnswers, hasWronged } = this.data;
 
     if (pageState === 'selected') {
       // 确认答案 - 检查所有填空
@@ -357,7 +359,8 @@ Page({
         this.stopTimer();
         this.setData({
           pageState: 'correct',
-          score: this.data.score + 10
+          // 只有第一次答对才加分
+          score: hasWronged ? this.data.score : this.data.score + 10
         });
 
         // 可能更换根音（10%概率）
@@ -366,7 +369,17 @@ Page({
           this.setData({ rootNote: newRoot });
         }
       } else {
-        // 答错
+        // 答错：标记每个填空是否答对
+        const newProgression = [...progression];
+        for (let i = 0; i < blankIndices.length; i++) {
+          const blankIdx = blankIndices[i];
+          const userAnswer = progression[blankIdx].userAnswer;
+          newProgression[blankIdx] = {
+            ...newProgression[blankIdx],
+            isUserCorrect: userAnswer === correctAnswers[i]
+          };
+        }
+        this.setData({ hasWronged: true, progression: newProgression });
         this.loseHeart();
       }
     } else if (pageState === 'idle') {
