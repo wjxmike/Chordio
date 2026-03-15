@@ -365,7 +365,7 @@ page {
 }
 
 .login-title {
-  font-family: 'Fredoka One', sans-serif;
+  font-family: '江城圆体', sans-serif;
   font-size: 40rpx;
   color: #FFFFFF;
   letter-spacing: 2rpx;
