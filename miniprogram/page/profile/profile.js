@@ -64,21 +64,21 @@ Page({
     if (userInfo && userInfo.isLoggedIn) {
       // 已登录，显示用户信息
       this.setData({ userInfo });
-    } else {
-      // 未登录，显示登录弹窗
-      this.setData({ showLoginModal: true, isEditMode: false });
     }
+    // 未登录时不自动弹窗，允许用户先体验
   },
 
   /**
-   * 点击头像卡片 - 进入编辑模式
+   * 点击头像卡片 - 进入编辑模式或登录模式
    */
   onAvatarCardTap() {
     wx.vibrateShort({ type: 'light' });
     const { userInfo } = this.data;
+    const isLoggedIn = wx.getStorageSync('userInfo')?.isLoggedIn;
+
     this.setData({
       showLoginModal: true,
-      isEditMode: true,
+      isEditMode: isLoggedIn,  // 已登录才是编辑模式，未登录是登录模式
       tempAvatarUrl: userInfo.avatarUrl,
       tempNickName: userInfo.nickName
     });

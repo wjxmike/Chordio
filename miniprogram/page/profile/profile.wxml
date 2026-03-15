@@ -88,7 +88,7 @@
     <!-- 确认按钮 -->
     <button class="login-confirm-btn" bindtap="onConfirmLogin">{{isEditMode ? '保存' : '开始使用'}}</button>
 
-    <!-- 取消按钮（编辑模式显示） -->
-    <button wx:if="{{isEditMode}}" class="login-cancel-btn" bindtap="onCancelEdit">取消</button>
+    <!-- 取消/跳过按钮 -->
+    <button class="login-cancel-btn" bindtap="onCancelEdit">{{isEditMode ? '取消' : '跳过'}}</button>
   </view>
 </view>
