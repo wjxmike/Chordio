@@ -64,8 +64,10 @@ Page({
     if (userInfo && userInfo.isLoggedIn) {
       // 已登录，显示用户信息
       this.setData({ userInfo });
+    } else {
+      // 未登录，显示登录弹窗（用户可点击"跳过"关闭）
+      this.setData({ showLoginModal: true, isEditMode: false });
     }
-    // 未登录时不自动弹窗，允许用户先体验
   },
 
   /**
