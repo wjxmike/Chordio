@@ -19,6 +19,8 @@ const PRIORITY = {
 };
 
 const pendingDownloads = new Map();
+/** 持久化缓存失败时，本场临时路径（如开发者工具） */
+const sessionTempCache = new Map();
 /** @type {{ path: string, priority: number, seq: number }[]} */
 const downloadQueue = [];
 let queueActive = 0;
@@ -53,10 +55,46 @@ function isCached(relativePath) {
 }
 
 function getLocalPathIfCached(relativePath) {
-  if (!relativePath || !isCached(relativePath)) {
+  if (!relativePath) {
     return null;
   }
-  return cachePath(relativePath);
+  if (isCached(relativePath)) {
+    return cachePath(relativePath);
+  }
+  if (sessionTempCache.has(relativePath)) {
+    return sessionTempCache.get(relativePath);
+  }
+  return null;
+}
+
+function downloadToTemp(url) {
+  return new Promise((resolve, reject) => {
+    wx.downloadFile({
+      url,
+      success: (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.tempFilePath) {
+          resolve(res.tempFilePath);
+          return;
+        }
+        reject(new Error(`[song-cache] HTTP ${res.statusCode}`));
+      },
+      fail: reject
+    });
+  });
+}
+
+function persistTempFile(tempFilePath, localPath) {
+  return new Promise((resolve) => {
+    fs.copyFile({
+      srcPath: tempFilePath,
+      destPath: localPath,
+      success: () => resolve(localPath),
+      fail: () => {
+        // 开发者工具等环境无法写入 usr 目录时，仍可用临时文件播放
+        resolve(tempFilePath);
+      }
+    });
+  });
 }
 
 function removeFromQueue(relativePath) {
@@ -106,8 +144,8 @@ function drainQueue() {
 
     queueActive += 1;
     downloadSong(item.path)
-      .catch((err) => {
-        console.warn('[song-cache] queue download failed:', item.path, err);
+      .catch(() => {
+        // 预下载失败时静默处理，当前题会走 CDN 流式播放
       })
       .finally(() => {
         queueActive -= 1;
@@ -134,6 +172,7 @@ function downloadSong(relativePath) {
 
   const promise = new Promise((resolve, reject) => {
     let settled = false;
+    const url = getAssetUrl(relativePath);
 
     const timer = setTimeout(() => {
       if (settled) return;
@@ -141,25 +180,42 @@ function downloadSong(relativePath) {
       reject(new Error(`[song-cache] timeout: ${relativePath}`));
     }, DOWNLOAD_TIMEOUT_MS);
 
+    const finish = (filePath) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (filePath === local) {
+        sessionTempCache.delete(relativePath);
+      } else {
+        sessionTempCache.set(relativePath, filePath);
+      }
+      resolve(filePath);
+    };
+
+    const fail = (err) => {
+      if (settled) return;
+      downloadToTemp(url)
+        .then((temp) => persistTempFile(temp, local))
+        .then(finish)
+        .catch((retryErr) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          reject(retryErr || err);
+        });
+    };
+
     wx.downloadFile({
-      url: getAssetUrl(relativePath),
+      url,
       filePath: local,
       success: (res) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.filePath || local);
+          finish(res.filePath || local);
           return;
         }
-        reject(new Error(`[song-cache] HTTP ${res.statusCode}`));
+        fail(new Error(`[song-cache] HTTP ${res.statusCode}`));
       },
-      fail: (err) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        reject(err);
-      }
+      fail
     });
   }).finally(() => {
     pendingDownloads.delete(relativePath);
