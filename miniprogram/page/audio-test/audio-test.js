@@ -3,6 +3,8 @@
  * 用于诊断 Web Audio 在真机环境下的行为
  */
 
+const { getAssetUrl, downloadAsset, ensureAssetsReady } = require('../../config/assets');
+
 Page({
   data: {
     logs: [],
@@ -247,49 +249,34 @@ Page({
    * 测试3b: 使用 InnerAudio 播放（对比测试）
    */
   testInnerAudio() {
-    this.log('【测试3b】使用 InnerAudio 播放...');
+    this.log('【测试3b】CDN 下载后用 InnerAudio 播放...');
 
-    // 使用云存储的音频文件
-    const cloudPath = 'cloud://cloudbase-3gk50z3ibc7a8b9f.636c-cloudbase-3gk50z3ibc7a8b9f-1391793431/piano/C4.m4a';
+    const url = getAssetUrl('piano/C4.m4a');
+    downloadAsset('piano/C4.m4a').then((tempFilePath) => {
+      this.log(`下载成功: ${tempFilePath} (${url})`);
+      const innerAudio = wx.createInnerAudioContext();
+      innerAudio.src = tempFilePath;
+      innerAudio.volume = 1;
 
-    // 初始化云开发
-    if (wx.cloud) {
-      wx.cloud.init({
-        env: 'cloudbase-3gk50z3ibc7a8b9f',
-        traceUser: true
+      innerAudio.onCanplay(() => {
+        this.log('InnerAudio: onCanplay');
+        innerAudio.play();
       });
-    }
 
-    // 先下载，再用 InnerAudio 播放
-    wx.cloud.downloadFile({
-      fileID: cloudPath,
-      success: (res) => {
-        this.log(`下载成功: ${res.tempFilePath}`);
-        const innerAudio = wx.createInnerAudioContext();
-        innerAudio.src = res.tempFilePath;
-        innerAudio.volume = 1;
+      innerAudio.onPlay(() => {
+        this.log('InnerAudio: onPlay');
+      });
 
-        innerAudio.onCanplay(() => {
-          this.log('InnerAudio: onCanplay');
-          innerAudio.play();
-        });
+      innerAudio.onEnded(() => {
+        this.log('InnerAudio: onEnded');
+        innerAudio.destroy();
+      });
 
-        innerAudio.onPlay(() => {
-          this.log('InnerAudio: onPlay');
-        });
-
-        innerAudio.onEnded(() => {
-          this.log('InnerAudio: onEnded');
-          innerAudio.destroy();
-        });
-
-        innerAudio.onError((err) => {
-          this.log(`InnerAudio onError: ${JSON.stringify(err)}`, 'error');
-        });
-      },
-      fail: (err) => {
-        this.log(`下载失败: ${JSON.stringify(err)}`, 'error');
-      }
+      innerAudio.onError((err) => {
+        this.log(`InnerAudio onError: ${JSON.stringify(err)}`, 'error');
+      });
+    }).catch((err) => {
+      this.log(`下载失败: ${JSON.stringify(err)} url=${url}`, 'error');
     });
   },
 
@@ -297,19 +284,10 @@ Page({
    * 测试3c: 直接用云存储路径 InnerAudio 播放
    */
   testInnerAudioCloud() {
-    this.log('【测试3c】InnerAudio 直接使用云路径...');
-
-    if (wx.cloud) {
-      wx.cloud.init({
-        env: 'cloudbase-3gk50z3ibc7a8b9f',
-        traceUser: true
-      });
-    }
-
-    const cloudPath = 'cloud://cloudbase-3gk50z3ibc7a8b9f.636c-cloudbase-3gk50z3ibc7a8b9f-1391793431/piano/C4.m4a';
+    this.log('【测试3c】InnerAudio 直接使用 CDN URL...');
 
     const innerAudio = wx.createInnerAudioContext();
-    innerAudio.src = cloudPath;  // 直接使用云路径
+    innerAudio.src = getAssetUrl('piano/C4.m4a');
     innerAudio.volume = 1;
 
     innerAudio.onCanplay(() => {
@@ -335,28 +313,14 @@ Page({
    * 测试4: 预加载钢琴采样（使用 wx.cloud.downloadFile）
    */
   async testPreloadPianoSamples() {
-    this.log('【测试4】预加载钢琴采样（使用 cloud.downloadFile）...');
+    this.log('【测试4】预加载钢琴采样（CDN downloadFile）...');
 
     if (!this.audioCtx) {
       this.log('上下文未创建', 'error');
       return;
     }
 
-    // 初始化云开发
-    if (wx.cloud) {
-      try {
-        wx.cloud.init({
-          env: 'cloudbase-3gk50z3ibc7a8b9f',
-          traceUser: true
-        });
-        this.log('云开发初始化成功');
-      } catch (e) {
-        this.log(`云开发初始化失败: ${JSON.stringify(e)}`, 'error');
-      }
-    } else {
-      this.log('wx.cloud 不可用', 'error');
-      return;
-    }
+    await ensureAssetsReady();
 
     const notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
     const octaves = [3, 4];
@@ -367,56 +331,37 @@ Page({
     for (const octave of octaves) {
       for (const note of notes) {
         const key = `${note}${octave}`;
-        const cloudPath = `cloud://cloudbase-3gk50z3ibc7a8b9f.636c-cloudbase-3gk50z3ibc7a8b9f-1391793431/piano/${key}.m4a`;
+        const assetPath = `piano/${key}.m4a`;
 
         this.log(`加载 ${key}...`);
 
         try {
-          // 使用 wx.cloud.downloadFile 下载到本地
-          this.log(`  下载: ${cloudPath}`);
+          this.log(`  下载: ${getAssetUrl(assetPath)}`);
           const downloadRes = await new Promise((resolve, reject) => {
-            wx.cloud.downloadFile({
-              fileID: cloudPath,
-              success: resolve,
-              fail: (err) => {
-                this.log(`  downloadFile fail: ${JSON.stringify(err)}`, 'error');
-                reject(err);
-              }
-            });
+            downloadAsset(assetPath).then((tempFilePath) => resolve({ tempFilePath })).catch(reject);
           });
-
-          this.log(`  下载成功，临时路径: ${downloadRes.tempFilePath}`);
-
-          // 读取文件为 ArrayBuffer
           const fileData = await new Promise((resolve, reject) => {
             wx.getFileSystemManager().readFile({
               filePath: downloadRes.tempFilePath,
-              success: (res) => resolve(res.data),
-              fail: (err) => {
-                this.log(`  readFile fail: ${JSON.stringify(err)}`, 'error');
-                reject(err);
-              }
+              success: (r) => resolve(r.data),
+              fail: reject
             });
           });
-
-          this.log(`  读取成功，大小: ${fileData.byteLength} bytes`);
-
-          // 解码
-          this.log(`  解码中...`);
-          const buffer = await new Promise((resolve, reject) => {
+          await new Promise((resolve) => {
             this.audioCtx.decodeAudioData(fileData,
-              (buf) => resolve(buf),
+              (buffer) => {
+                this.sampleBuffers[key] = buffer;
+                loaded++;
+                this.setData({ samplesLoaded: loaded });
+                this.log(`✓ ${key} 加载成功，时长: ${buffer.duration.toFixed(2)}s`);
+                resolve();
+              },
               (err) => {
                 this.log(`  decodeAudioData fail: ${JSON.stringify(err)}`, 'error');
-                reject(err);
+                resolve();
               }
             );
           });
-
-          this.sampleBuffers[key] = buffer;
-          loaded++;
-          this.setData({ samplesLoaded: loaded });
-          this.log(`✓ ${key} 加载成功，时长: ${buffer.duration.toFixed(2)}s`);
 
         } catch (e) {
           this.log(`✗ ${key} 加载异常: ${JSON.stringify(e)}`, 'error');

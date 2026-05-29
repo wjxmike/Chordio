@@ -49,3 +49,12 @@
     </block>
   </view>
 </view>
+
+<share-modal
+  show="{{showShareModal}}"
+  title="{{shareModalTitle}}"
+  message="{{shareModalMessage}}"
+  cancel-text="{{shareModalCancelText}}"
+  bind:cancel="onShareModalCancel"
+  bind:share="onShareModalShare"
+/>

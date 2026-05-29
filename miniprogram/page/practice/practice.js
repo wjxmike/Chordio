@@ -6,6 +6,7 @@
 const chords = require('../../utils/chords');
 const audio = require('../../utils/audio');
 const playCount = require('../../utils/play-count');
+const sharePrompt = require('../../utils/share-prompt');
 
 // 预加载钢琴采样
 audio.initPiano();
@@ -46,6 +47,12 @@ Page({
 
     // 统计
     correctCount: 0,         // 本套练习答对数量
+
+    showShareModal: false,
+    shareModalTitle: '',
+    shareModalMessage: '',
+    shareModalCancelText: '稍后再说',
+    navigateAfterShare: false
   },
 
   onLoad(options) {
@@ -117,12 +124,20 @@ Page({
       blankIndex: q.blankIndex,
       correctAnswer: q.correctAnswer,
       options: q.options,
-      pageState: 'playing',
+      pageState: 'idle',
       selectedAnswer: null,
       hasWronged: false,
       prevProgression: q.progression,
       prevBlankIndex: q.blankIndex,
     });
+  },
+
+  _stopProgressionPlayback() {
+    audio.stopCurrentPlayback();
+    if (this._progressionEndTimer) {
+      clearTimeout(this._progressionEndTimer);
+      this._progressionEndTimer = null;
+    }
   },
 
   /**
@@ -133,8 +148,11 @@ Page({
     const ctx = audio.getAudioContext();
     const duration = audio.playProgression(ctx, progression, rootNote, level);
 
-    setTimeout(() => {
-      this.setData({ pageState: 'idle' });
+    if (this._progressionEndTimer) {
+      clearTimeout(this._progressionEndTimer);
+    }
+    this._progressionEndTimer = setTimeout(() => {
+      this._progressionEndTimer = null;
     }, duration * 1000);
   },
 
@@ -150,14 +168,13 @@ Page({
       blankIndex: q.blankIndex,
       correctAnswer: q.correctAnswer,
       options: q.options,
-      pageState: 'playing',
+      pageState: 'idle',
       selectedAnswer: null,
       hasWronged: false,
       prevProgression: q.progression,
       prevBlankIndex: q.blankIndex,
     });
 
-    // 播放音频
     this.playCurrentProgression();
   },
 
@@ -165,24 +182,20 @@ Page({
    * 点击顶部方块（重新听某个和弦，或取消选择）
    */
   onBlockTap(e) {
-    const { pageState, progression, rootNote, level, blankIndex, correctAnswer } = this.data;
-    // playing 状态下不允许点击
-    if (pageState === 'playing') return;
+    this._stopProgressionPlayback();
 
+    const { pageState, progression, rootNote, level, blankIndex, correctAnswer } = this.data;
     const index = e.currentTarget.dataset.index;
 
-    // 点击填空处
     if (index === blankIndex) {
       if (pageState === 'correct') {
-        // 答对后：播放正确答案的和弦，不取消选择
         this.vibrateShort();
         const ctx = audio.getAudioContext();
         audio.playOneChord(ctx, correctAnswer, rootNote, level);
         return;
-      } else if (pageState === 'selected') {
-        // 已选中：取消选择，回到 idle
+      }
+      if (pageState === 'selected') {
         this.vibrateShort();
-        audio.stopCurrentPlayback();
         this.setData({
           selectedAnswer: null,
           pageState: 'idle',
@@ -190,6 +203,11 @@ Page({
         });
         return;
       }
+      // idle / wrong：播放填空处和弦（界面仍显示空白）
+      this.vibrateShort();
+      const ctx = audio.getAudioContext();
+      audio.playOneChord(ctx, progression[blankIndex], rootNote, level);
+      return;
     }
 
     this.vibrateShort();
@@ -229,7 +247,7 @@ Page({
     }
 
     if (pageState === 'idle' && !hasWronged) {
-      // 播放根音（正弦波）
+      this._stopProgressionPlayback();
       this.vibrateShort();
       this.playRootNoteSine();
     }
@@ -313,21 +331,14 @@ Page({
     const noMoreCount = remainingCount === 0;
 
     if (noMoreCount) {
-      // 能量用完，提示分享
-      wx.showModal({
-        title: '练习完成！',
-        content: `正确率：${percentage}% (${correctCount}/${totalQuestions})${unlockMessage}\n\n⚠️ 今日能量已用完，分享给好友可获得额外 3 点能量`,
-        showCancel: true,
-        cancelText: '稍后再说',
-        confirmText: '去分享',
-        success: (res) => {
-          if (res.confirm) {
-            // 返回首页进行分享
-            wx.navigateBack({ delta: 2 });
-          } else {
-            wx.navigateBack();
-          }
-        }
+      this.setData({
+        showShareModal: true,
+        shareModalTitle: '练习完成！',
+        shareModalMessage: sharePrompt.buildEnergyShareMessage(
+          `正确率：${percentage}% (${correctCount}/${totalQuestions})${unlockMessage}`
+        ),
+        shareModalCancelText: '稍后再说',
+        navigateAfterShare: false
       });
     } else if (isPerfect) {
       // 100% 正确率：只显示"完成"按钮
@@ -396,10 +407,9 @@ Page({
    * 用户选择答案（短暂高亮 + 播放和弦 + 填空显示）
    */
   onOptionSelect(e) {
-    const { pageState, selectedAnswer, rootNote, level } = this.data;
-    // playing 状态下不允许操作
-    if (pageState === 'playing') return;
+    this._stopProgressionPlayback();
 
+    const { pageState, selectedAnswer, rootNote, level } = this.data;
     const selected = e.currentTarget.dataset.chord;
     const index = e.currentTarget.dataset.index;
 
@@ -460,7 +470,24 @@ Page({
    * 页面卸载时清理
    */
   onUnload() {
-    // 停止当前音频播放
-    audio.stopCurrentPlayback();
+    this._stopProgressionPlayback();
+  },
+
+  onShareModalCancel() {
+    this.setData({ showShareModal: false });
+    wx.navigateBack();
+  },
+
+  onShareModalShare() {
+    this.setData({ showShareModal: false, navigateAfterShare: true });
+  },
+
+  onShareAppMessage() {
+    const result = sharePrompt.getShareAppMessageReturn();
+    if (this.data.navigateAfterShare) {
+      this.setData({ navigateAfterShare: false });
+      setTimeout(() => wx.navigateBack(), 300);
+    }
+    return result;
   }
 });

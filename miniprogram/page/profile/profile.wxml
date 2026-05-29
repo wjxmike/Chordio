@@ -14,7 +14,7 @@
 
     <!-- 版本信息卡片 -->
     <view class="version-card">
-      <text class="version-text">版本 v1.1.0 Beta</text>
+      <text class="version-text">版本 {{versionLabel}}</text>
       <view class="version-message">
         <text>感谢你的使用</text>
         <text>如果有任何建议</text>

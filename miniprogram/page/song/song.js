@@ -7,9 +7,10 @@ const songs = require('../../data/songs');
 const chords = require('../../utils/chords');
 const audio = require('../../utils/audio');
 const playCount = require('../../utils/play-count');
-
-// 预加载钢琴采样
-audio.initPiano();
+const songCache = require('../../utils/song-cache');
+const songSession = require('../../utils/song-session');
+const sharePrompt = require('../../utils/share-prompt');
+const { getAssetUrl, ensureAssetsReady } = require('../../config/assets');
 
 Page({
   data: {
@@ -31,10 +32,9 @@ Page({
     songProgress: 0,      // 0-100
     isDragging: false,    // 是否正在拖动进度条
     _wasPlayingBeforeDrag: false,  // 拖动前是否在播放
-    shouldAutoPlay: false,  // 是否需要自动播放（等待 onCanplay）
 
     // 用户交互状态
-    pageState: 'idle',    // 'idle' | 'playing' | 'selected' | 'correct' | 'wrong'
+    pageState: 'idle',    // 'idle' | 'selected' | 'correct' | 'wrong'
     selectedAnswer: null,
     flashingIndex: null,
     hasWronged: false,    // 本题是否答错过
@@ -44,18 +44,77 @@ Page({
 
     // 预加载
     preloadCover: '',  // 下一首歌曲封面
+
+    showShareModal: false,
+    shareModalTitle: '',
+    shareModalMessage: '',
+    shareModalCancelText: '稍后再说',
+    navigateAfterShare: false
   },
 
   // InnerAudio 实例
   _songAudio: null,
+  _songLoadId: 0,
+  _pendingAutoPlay: false,
+  _currentAudioPath: '',
+  _streamFallbackTimer: null,
+
+  /** 下载过慢时先切 CDN 流式，避免一直卡住 */
+  STREAM_FALLBACK_MS: 8000,
 
   onLoad(options) {
+    ensureAssetsReady();
+    songCache.ensureDir();
+
     // 启用退出提示
     wx.enableAlertBeforeUnload({
       message: '练习中途退出将不会返还能量，确定要退出吗？'
     });
 
-    // 加载字体
+    // 先初始化音频与第一题，避免字体加载阻塞首曲播放
+    this._songAudio = wx.createInnerAudioContext();
+    this._songAudio.onEnded(() => {
+      this.setData({ isPlaying: false, songProgress: 100 });
+    });
+    this._songAudio.onError((err) => {
+      console.error('歌曲播放错误:', err);
+      const shouldAutoPlay = this._pendingAutoPlay;
+      this.setData({ isPlaying: false });
+      this._pendingAutoPlay = false;
+      this._clearAutoPlayPoll();
+
+      if (this._currentAudioPath && this._lastSrcWasLocal) {
+        console.warn('[song] local clip failed, retry stream');
+        this._applySongSrc(getAssetUrl(this._currentAudioPath), shouldAutoPlay, this._songLoadId);
+      }
+    });
+    this._songAudio.onCanplay(() => {
+      this._tryAutoPlay();
+    });
+    this._songAudio.onPlay(() => {
+      if (this._pendingAutoPlay) {
+        this._tryAutoPlay();
+      }
+    });
+
+    this.getChordNodes = chords.getChordNodes;
+
+    // 每次进入都从头开始，随机新题组
+    this._shuffledQuestions = songSession.selectQuestions(songSession.MAX_QUESTIONS);
+    this.setData({
+      totalQuestions: this._shuffledQuestions.length,
+      currentIndex: 0,
+      correctCount: 0
+    });
+
+    songSession.scheduleSessionDownloads(this._shuffledQuestions, 0);
+    this.generateQuestion();
+
+    // 钢琴采样延后，避免与首题音频抢带宽（App 启动时也会加载）
+    setTimeout(() => {
+      audio.initPiano();
+    }, 1500);
+
     wx.loadFontFace({
       family: 'Protest Strike',
       source: 'url("https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets/fonts/ProtestStrike.ttf")',
@@ -76,61 +135,6 @@ Page({
       success: (res) => console.log('江城圆体 加载成功', res),
       fail: (err) => console.error('江城圆体 加载失败', err)
     });
-
-    // 绑定和弦格式化函数供模板使用
-    this.getChordNodes = chords.getChordNodes;
-
-    // 初始化 InnerAudio
-    this._songAudio = wx.createInnerAudioContext();
-    this._songAudio.onEnded(() => {
-      this.setData({ isPlaying: false, songProgress: 100 });
-    });
-    this._songAudio.onError((err) => {
-      console.error('歌曲播放错误:', err);
-      this.setData({ isPlaying: false, shouldAutoPlay: false });
-    });
-    this._songAudio.onCanplay(() => {
-      // 音频准备好后，如果需要自动播放则播放
-      if (this.data.shouldAutoPlay) {
-        this._songAudio.play();
-        this.setData({ isPlaying: true, shouldAutoPlay: false, pageState: 'idle' });
-
-        // 启动进度更新
-        this._updateProgressTimer = setInterval(() => {
-          if (this._songAudio.duration > 0) {
-            const progress = (this._songAudio.currentTime / this._songAudio.duration) * 100;
-            this.setData({ songProgress: Math.min(progress, 100) });
-          }
-        }, 100);
-      }
-    });
-
-    // 选择题目：最多10题，题目不重复但歌曲可以重复
-    this._shuffledQuestions = this.selectQuestions(10);
-    this.setData({ totalQuestions: this._shuffledQuestions.length });
-
-    // 生成第一题
-    this.generateQuestion();
-  },
-
-  /**
-   * 选择题目，题目不重复但歌曲可以重复出现
-   * @param {number} maxQuestions 最多题目数量
-   */
-  selectQuestions(maxQuestions) {
-    const allQuestions = songs.getAllQuestions();
-
-    // 打乱所有题目
-    const shuffled = this.shuffleArray([...allQuestions]);
-
-    // 直接选择前 maxQuestions 道题目（题目不重复）
-    return shuffled.slice(0, Math.min(maxQuestions, shuffled.length));
-  },
-
-  onReady() {
-    // 页面准备好后播放歌曲片段
-    // 播放由 onCanplay 事件驱动，无需固定延迟
-    this.playSongAudio();
   },
 
   /**
@@ -147,7 +151,11 @@ Page({
     }
 
     const question = allQuestions[currentIndex];
-    const song = songs.getSong(question.songId);
+    const songRaw = songs.getSong(question.songId);
+    const song = {
+      ...songRaw,
+      cover: getAssetUrl(songRaw.cover)
+    };
 
     // 随机选择填空位置
     const blankIndex = Math.floor(Math.random() * question.progression.length);
@@ -164,14 +172,9 @@ Page({
       userAnswer: null
     }));
 
-    // 停止当前播放并设置新的音频源
-    this._songAudio.stop();
-    this._songAudio.src = question.audio;
-
     // 计算显示用的根音（小调显示 "Fm"，大调显示 "F"）
     const rootNoteDisplay = question.isMinor ? question.rootNote + 'm' : question.rootNote;
 
-    // 重置自动播放状态，强制等待 onCanplay
     this.setData({
       song,
       rootNote: question.rootNote,
@@ -180,22 +183,24 @@ Page({
       blankIndex,
       correctAnswer,
       options,
-      pageState: 'playing',
+      pageState: 'idle',
       selectedAnswer: null,
       flashingIndex: null,
       hasWronged: false,
       isPlaying: false,
-      songProgress: 0,
-      shouldAutoPlay: false,  // 重置，等待 playSongAudio 设置
+      songProgress: 0
     });
 
-    // 预加载下一首歌曲封面
+    // 预加载下一首歌曲封面 + 后台预下载后续题目音频
     const nextIndex = currentIndex + 1;
     if (nextIndex < allQuestions.length) {
       const nextQuestion = allQuestions[nextIndex];
       const nextSong = songs.getSong(nextQuestion.songId);
-      this.setData({ preloadCover: nextSong.cover });
+      this.setData({ preloadCover: getAssetUrl(nextSong.cover) });
     }
+    songSession.scheduleSessionDownloads(allQuestions, currentIndex);
+
+    this.prepareSongClip(question.audio, true);
   },
 
   /**
@@ -255,46 +260,191 @@ Page({
     if (this.data.isPlaying) {
       this._songAudio.pause();
       this.setData({ isPlaying: false });
-    } else {
-      this._songAudio.play();
-      this.setData({ isPlaying: true });
-
-      // 更新进度
-      this._updateProgressTimer = setInterval(() => {
-        if (this._songAudio.duration > 0) {
-          const progress = (this._songAudio.currentTime / this._songAudio.duration) * 100;
-          this.setData({ songProgress: Math.min(progress, 100) });
-        }
-      }, 100);
+      this._clearProgressTimer();
+      return;
     }
+
+    if (!this._songClipReady) {
+      if (this._currentAudioPath) {
+        this._playViaStream(this._currentAudioPath, false);
+      }
+      return;
+    }
+
+    const duration = this._songAudio.duration || 0;
+    const atEnd = duration > 0 && this._songAudio.currentTime >= duration - 0.05;
+    if (atEnd || this.data.songProgress >= 99) {
+      this._songAudio.seek(0);
+      this.setData({ songProgress: 0 });
+    }
+
+    this._songAudio.play();
+    this.setData({ isPlaying: true });
+    this._startProgressTimer();
   },
 
-  /**
-   * 播放歌曲片段（自动播放用）
-   * 设置标记，等待 onCanplay 触发后播放
-   */
-  playSongAudio() {
-    // 清理旧的进度更新定时器
+  _clearProgressTimer() {
     if (this._updateProgressTimer) {
       clearInterval(this._updateProgressTimer);
       this._updateProgressTimer = null;
     }
+  },
 
-    // 设置自动播放标记，等待 onCanplay 触发
-    this.setData({ shouldAutoPlay: true });
+  _startProgressTimer() {
+    this._clearProgressTimer();
+    this._updateProgressTimer = setInterval(() => {
+      if (this._songAudio && this._songAudio.duration > 0) {
+        const progress = (this._songAudio.currentTime / this._songAudio.duration) * 100;
+        this.setData({ songProgress: Math.min(progress, 100) });
+      }
+    }, 100);
+  },
 
-    // 不再依赖 duration 判断，完全由 onCanplay 驱动
+  _clearAutoPlayPoll() {
+    if (this._autoPlayPoll) {
+      clearInterval(this._autoPlayPoll);
+      this._autoPlayPoll = null;
+    }
+  },
+
+  _clearStreamFallbackTimer() {
+    if (this._streamFallbackTimer) {
+      clearTimeout(this._streamFallbackTimer);
+      this._streamFallbackTimer = null;
+    }
+  },
+
+  _startPlayback() {
+    if (!this._songClipReady) return;
+
+    const player = this._songAudio;
+    player.seek(0);
+    player.play();
+
+    this.setData({
+      isPlaying: true,
+      songProgress: 0
+    });
+    this._startProgressTimer();
+  },
+
+  _tryAutoPlay() {
+    if (!this._pendingAutoPlay || !this._songClipReady) return;
+
+    this._pendingAutoPlay = false;
+    this._clearAutoPlayPoll();
+    this._startPlayback();
+  },
+
+  _startAutoPlayPoll(loadId) {
+    this._clearAutoPlayPoll();
+    let attempts = 0;
+
+    this._autoPlayPoll = setInterval(() => {
+      if (loadId !== this._songLoadId || !this._pendingAutoPlay) {
+        this._clearAutoPlayPoll();
+        return;
+      }
+
+      attempts += 1;
+      if (this._songAudio.duration > 0) {
+        this._tryAutoPlay();
+        return;
+      }
+
+      if (attempts >= 50) {
+        this._clearAutoPlayPoll();
+        this._tryAutoPlay();
+      }
+    }, 100);
+  },
+
+  _playViaStream(relativePath, autoPlay) {
+    this._clearStreamFallbackTimer();
+    this._applySongSrc(getAssetUrl(relativePath), autoPlay, this._songLoadId);
+    if (!autoPlay) {
+      wx.nextTick(() => {
+        if (this._songClipReady) {
+          this._startPlayback();
+        }
+      });
+    }
+  },
+
+  _applySongSrc(src, autoPlay, loadId) {
+    if (loadId !== this._songLoadId) return;
+
+    this._clearStreamFallbackTimer();
+    this._lastSrcWasLocal = src && !songCache.isRemoteUrl(src);
+    this._songAudio.src = src;
+    this._songClipReady = true;
+
+    if (autoPlay) {
+      this._pendingAutoPlay = true;
+      if (this._songAudio.duration > 0) {
+        this._tryAutoPlay();
+      } else {
+        wx.nextTick(() => {
+          if (loadId !== this._songLoadId || !this._pendingAutoPlay) return;
+          if (this._songAudio.duration > 0) {
+            this._tryAutoPlay();
+            return;
+          }
+          this._startAutoPlayPoll(loadId);
+        });
+      }
+    }
+  },
+
+  /**
+   * 先下载到本地再设置 src，避免流式加载从中间开始播
+   */
+  prepareSongClip(relativePath, autoPlay) {
+    this._songLoadId += 1;
+    const loadId = this._songLoadId;
+    this._currentAudioPath = relativePath;
+    this._pendingAutoPlay = false;
+    this._songClipReady = false;
+    this._clearAutoPlayPoll();
+    this._clearStreamFallbackTimer();
+    this._clearProgressTimer();
+    if (this._songAudio.src) {
+      this._songAudio.stop();
+    }
+
+    this.setData({ isPlaying: false, songProgress: 0 });
+
+    const cachedPath = songCache.getLocalPathIfCached(relativePath);
+    if (cachedPath) {
+      this._applySongSrc(cachedPath, autoPlay, loadId);
+      return;
+    }
+
+    this._streamFallbackTimer = setTimeout(() => {
+      if (loadId !== this._songLoadId || this._songClipReady) return;
+      console.warn('[song] download slow, fallback to stream', relativePath);
+      this._playViaStream(relativePath, autoPlay);
+    }, this.STREAM_FALLBACK_MS);
+
+    songCache.prioritizeDownload(relativePath)
+      .then((localPath) => {
+        if (loadId !== this._songLoadId) return;
+        if (this._songClipReady) return;
+        this._applySongSrc(localPath, autoPlay, loadId);
+      })
+      .catch((err) => {
+        if (loadId !== this._songLoadId) return;
+        if (this._songClipReady) return;
+        console.warn('[song] download failed, fallback to stream', err);
+        this._playViaStream(relativePath, autoPlay);
+      });
   },
 
   /**
    * 进度条触摸开始
    */
   onProgressTouchStart(e) {
-    // 停止进度更新定时器
-    if (this._updateProgressTimer) {
-      clearInterval(this._updateProgressTimer);
-      this._updateProgressTimer = null;
-    }
+    this._clearProgressTimer();
 
     // 记录是否在播放
     this._wasPlayingBeforeDrag = this.data.isPlaying;
@@ -339,14 +489,7 @@ Page({
     if (this._wasPlayingBeforeDrag) {
       this._songAudio.play();
       this.setData({ isPlaying: true });
-
-      // 重新启动进度更新
-      this._updateProgressTimer = setInterval(() => {
-        if (this._songAudio.duration > 0) {
-          const progress = (this._songAudio.currentTime / this._songAudio.duration) * 100;
-          this.setData({ songProgress: Math.min(progress, 100) });
-        }
-      }, 100);
+      this._startProgressTimer();
     }
   },
 
@@ -372,7 +515,6 @@ Page({
    */
   onBlockTap(e) {
     const { pageState, progression, rootNote, blankIndex, correctAnswer } = this.data;
-    if (pageState === 'playing') return;
 
     const index = e.currentTarget.dataset.index;
 
@@ -411,7 +553,6 @@ Page({
    */
   onOptionSelect(e) {
     const { pageState, flashingIndex, options, rootNote } = this.data;
-    if (pageState === 'playing') return;
 
     const index = e.currentTarget.dataset.index;
     const selected = options[index];
@@ -462,9 +603,7 @@ Page({
       // 确认答案 - 暂停歌曲播放
       this._songAudio.pause();
       this.setData({ isPlaying: false });
-      if (this._updateProgressTimer) {
-        clearInterval(this._updateProgressTimer);
-      }
+      this._clearProgressTimer();
 
       wx.vibrateShort({ type: 'light' });
       if (selectedAnswer === correctAnswer) {
@@ -507,9 +646,6 @@ Page({
 
     this.setData({ currentIndex: nextIndex });
     this.generateQuestion();
-
-    // 播放由 onCanplay 事件驱动，无需固定延迟
-    this.playSongAudio();
   },
 
   /**
@@ -558,8 +694,8 @@ Page({
    * 显示结果
    */
   showResult() {
-    // 练习完成，禁用退出提示
     wx.disableAlertBeforeUnload();
+    songSession.prepareNextSessionAndPrefetchFirst({ forceNew: true });
 
     const { correctCount, totalQuestions } = this.data;
     const percentage = Math.round((correctCount / totalQuestions) * 100);
@@ -569,20 +705,14 @@ Page({
     const noMoreCount = remainingCount === 0;
 
     if (noMoreCount) {
-      // 能量用完，提示分享
-      wx.showModal({
-        title: '练习完成',
-        content: `答对 ${correctCount}/${totalQuestions} 题\n正确率：${percentage}%\n\n⚠️ 今日能量已用完，分享给好友可获得额外 3 点能量`,
-        showCancel: true,
-        cancelText: '稍后再说',
-        confirmText: '去分享',
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateBack({ delta: 2 });
-          } else {
-            wx.navigateBack();
-          }
-        }
+      this.setData({
+        showShareModal: true,
+        shareModalTitle: '练习完成',
+        shareModalMessage: sharePrompt.buildEnergyShareMessage(
+          `答对 ${correctCount}/${totalQuestions} 题\n正确率：${percentage}%`
+        ),
+        shareModalCancelText: '稍后再说',
+        navigateAfterShare: false
       });
     } else {
       wx.showModal({
@@ -598,25 +728,38 @@ Page({
   },
 
   onUnload() {
-    // 清理
     if (this._songAudio) {
       this._songAudio.stop();
       this._songAudio.destroy();
     }
-    if (this._updateProgressTimer) {
-      clearInterval(this._updateProgressTimer);
-    }
+    this._clearProgressTimer();
+    this._clearAutoPlayPoll();
+    this._clearStreamFallbackTimer();
     audio.stopCurrentPlayback();
+  },
+
+  onShareModalCancel() {
+    this.setData({ showShareModal: false });
+    wx.navigateBack();
+  },
+
+  onShareModalShare() {
+    this.setData({ showShareModal: false, navigateAfterShare: true });
   },
 
   /**
    * 分享到好友/群聊（歌曲模式不支持朋友圈分享）
    */
   onShareAppMessage() {
+    const result = sharePrompt.getShareAppMessageReturn();
+    if (this.data.navigateAfterShare) {
+      this.setData({ navigateAfterShare: false });
+      setTimeout(() => wx.navigateBack(), 300);
+    }
     const { song } = this.data;
-    return {
-      title: song ? `${song.title} - ${song.artist}` : 'Chordiio - 歌曲模式',
-      path: '/page/home/home'
-    };
+    if (song) {
+      result.title = `${song.title} - ${song.artist}`;
+    }
+    return result;
   }
 });

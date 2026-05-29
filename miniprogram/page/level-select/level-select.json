@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "share-modal": "/components/share-modal/share-modal"
+  },
   "navigationStyle": "custom"
 }

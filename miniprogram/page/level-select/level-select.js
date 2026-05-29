@@ -3,6 +3,7 @@
  */
 
 const playCount = require('../../utils/play-count');
+const sharePrompt = require('../../utils/share-prompt');
 
 Page({
   data: {
@@ -28,7 +29,12 @@ Page({
         nameEn: 'Chromatic Chords',
         unlocked: false,
       }
-    ]
+    ],
+
+    showShareModal: false,
+    shareModalTitle: '能量不足',
+    shareModalMessage: sharePrompt.ENERGY_SHARE_ONLY,
+    shareModalCancelText: '取消'
   },
 
   onLoad() {
@@ -101,16 +107,11 @@ Page({
 
     // 检查并扣除能量
     if (!playCount.canPlay()) {
-      wx.showModal({
-        title: '能量不足',
-        content: '今日免费能量已用完，分享给好友可获得额外3点能量',
-        confirmText: '去分享',
-        cancelText: '取消',
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateBack();
-          }
-        }
+      this.setData({
+        showShareModal: true,
+        shareModalTitle: '能量不足',
+        shareModalMessage: sharePrompt.ENERGY_SHARE_ONLY,
+        shareModalCancelText: '取消'
       });
       return;
     }
@@ -139,5 +140,17 @@ Page({
     wx.vibrateShort({
       type: 'light'
     });
+  },
+
+  onShareModalCancel() {
+    this.setData({ showShareModal: false });
+  },
+
+  onShareModalShare() {
+    this.setData({ showShareModal: false });
+  },
+
+  onShareAppMessage() {
+    return sharePrompt.getShareAppMessageReturn();
   }
 });

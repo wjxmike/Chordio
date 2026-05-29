@@ -1,0 +1,89 @@
+.share-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 2000;
+}
+
+.share-overlay--show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.share-content {
+  width: 600rpx;
+  background: #2A2A2A;
+  border-radius: 32rpx;
+  border: 4rpx solid #535353;
+  overflow: hidden;
+}
+
+.share-header {
+  padding: 40rpx 40rpx 24rpx;
+  border-bottom: 2rpx solid #3A3A3A;
+}
+
+.share-title {
+  font-family: '江城圆体', sans-serif;
+  font-size: 40rpx;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+.share-body {
+  padding: 32rpx 40rpx;
+}
+
+.share-message {
+  font-family: '江城圆体', sans-serif;
+  font-size: 28rpx;
+  color: #AAAAAA;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.share-footer {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 40rpx 40rpx;
+  border-top: 2rpx solid #3A3A3A;
+}
+
+.share-cancel {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-family: '江城圆体', sans-serif;
+  font-size: 32rpx;
+  color: #AAAAAA;
+}
+
+.share-btn {
+  flex: 2;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  background: #FF7A15;
+  border-radius: 16rpx;
+  font-family: '江城圆体', sans-serif;
+  font-size: 32rpx;
+  color: #FFFFFF;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.share-btn::after {
+  border: none;
+}

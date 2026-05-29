@@ -6,6 +6,7 @@
 const chords = require('../../utils/chords');
 const audio = require('../../utils/audio');
 const playCount = require('../../utils/play-count');
+const sharePrompt = require('../../utils/share-prompt');
 
 // 难度配置
 const DIFFICULTY_CONFIG = {
@@ -26,6 +27,12 @@ Page({
     timer: 15,
     maxTime: 15,
     gameOver: false,
+
+    showShareModal: false,
+    shareModalTitle: '',
+    shareModalMessage: '',
+    shareModalCancelText: '稍后再说',
+    navigateAfterShare: false,
 
     // 当前题目
     rootNote: 'C',
@@ -456,20 +463,14 @@ Page({
     const noMoreCount = remainingCount === 0;
 
     if (noMoreCount) {
-      // 能量用完，提示分享
-      wx.showModal({
-        title: '游戏结束',
-        content: `最终得分：${score}分\n最高记录：${Math.max(score, bestScore)}分\n\n⚠️ 今日能量已用完，分享给好友可获得额外 3 点能量`,
-        showCancel: true,
-        cancelText: '稍后再说',
-        confirmText: '去分享',
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateBack({ delta: 2 });
-          } else {
-            wx.navigateBack();
-          }
-        }
+      this.setData({
+        showShareModal: true,
+        shareModalTitle: '游戏结束',
+        shareModalMessage: sharePrompt.buildEnergyShareMessage(
+          `最终得分：${score}分\n最高记录：${Math.max(score, bestScore)}分`
+        ),
+        shareModalCancelText: '稍后再说',
+        navigateAfterShare: false
       });
     } else {
       wx.showModal({
@@ -511,5 +512,23 @@ Page({
   onUnload() {
     this.stopTimer();
     audio.stopCurrentPlayback();
+  },
+
+  onShareModalCancel() {
+    this.setData({ showShareModal: false });
+    wx.navigateBack();
+  },
+
+  onShareModalShare() {
+    this.setData({ showShareModal: false, navigateAfterShare: true });
+  },
+
+  onShareAppMessage() {
+    const result = sharePrompt.getShareAppMessageReturn();
+    if (this.data.navigateAfterShare) {
+      this.setData({ navigateAfterShare: false });
+      setTimeout(() => wx.navigateBack(), 300);
+    }
+    return result;
   }
 });

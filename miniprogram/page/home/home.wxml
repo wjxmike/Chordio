@@ -107,3 +107,13 @@
     </view>
   </view>
 </view>
+
+<!-- 能量不足 · 分享弹窗 -->
+<share-modal
+  show="{{showShareModal}}"
+  title="{{shareModalTitle}}"
+  message="{{shareModalMessage}}"
+  cancel-text="{{shareModalCancelText}}"
+  bind:cancel="onShareModalCancel"
+  bind:share="onShareModalShare"
+/>

@@ -6,6 +6,8 @@
 const app = getApp();
 const playCount = require('../../utils/play-count');
 const changelog = require('../../data/changelog');
+const songSession = require('../../utils/song-session');
+const sharePrompt = require('../../utils/share-prompt');
 
 Page({
   data: {
@@ -17,10 +19,16 @@ Page({
     showBonusToast: false,  // 是否显示奖励浮窗
     bonusAmount: 0,      // 奖励数量
     showUpdateNotice: false,  // 是否显示更新公告
-    updateInfo: null     // 更新信息
+    updateInfo: null,     // 更新信息
+    showShareModal: false,   // 能量不足 · 分享弹窗
+    shareModalTitle: '能量不足',
+    shareModalMessage: sharePrompt.ENERGY_SHARE_ONLY,
+    shareModalCancelText: '取消'
   },
 
   onLoad() {
+    songSession.prepareNextSessionAndPrefetchFirst();
+
     // 从本地存储读取 streak
     this.loadStreak();
 
@@ -50,9 +58,10 @@ Page({
 
       // 等待剩余时间后切换到首页
       setTimeout(() => {
-        this.setData({ showSplash: false });
-        // 标记启动页已显示
-        app.globalData.splashShown = true;
+        this.setData({ showSplash: false }, () => {
+          app.globalData.splashShown = true;
+          this.maybeShowUpdateNotice();
+        });
       }, remaining);
     });
   },
@@ -84,12 +93,25 @@ Page({
       }, 300);
     }
 
-    // 检查是否需要显示更新公告
-    if (changelog.shouldShowUpdateNotice()) {
-      setTimeout(() => {
-        this.showUpdateNotice();
-      }, 500);
+    if (!this.data.showSplash) {
+      songSession.prepareNextSessionAndPrefetchFirst();
+      this.maybeShowUpdateNotice();
     }
+  },
+
+  /**
+   * 启动页结束后或返回首页时，弹出当前版本更新公告（每版本仅一次）
+   */
+  maybeShowUpdateNotice() {
+    if (this._updateNoticeScheduled || !changelog.shouldShowUpdateNotice()) {
+      return;
+    }
+    this._updateNoticeScheduled = true;
+    setTimeout(() => {
+      if (!this.data.showUpdateNotice) {
+        this.showUpdateNotice();
+      }
+    }, 400);
   },
 
   /**
@@ -189,22 +211,20 @@ Page({
    * 显示能量不足弹窗
    */
   showNoCountModal() {
-    wx.showModal({
-      title: '能量不足',
-      content: '今日免费能量已用完，分享给好友可获得额外3点能量',
-      confirmText: '分享',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          // 触发分享（用户需要点击右上角分享）
-          wx.showModal({
-            title: '分享成功',
-            content: '请点击右上角「...」分享给好友',
-            showCancel: false
-          });
-        }
-      }
+    this.setData({
+      showShareModal: true,
+      shareModalTitle: '能量不足',
+      shareModalMessage: sharePrompt.ENERGY_SHARE_ONLY,
+      shareModalCancelText: '取消'
     });
+  },
+
+  onShareModalCancel() {
+    this.setData({ showShareModal: false });
+  },
+
+  onShareModalShare() {
+    this.setData({ showShareModal: false });
   },
 
   /**
@@ -294,20 +314,13 @@ Page({
    * 分享到好友/群聊
    */
   onShareAppMessage() {
-    // 标记待发放奖励（返回时发放）
-    playCount.markPendingBonus();
-
-    return {
-      title: 'Chordiio：听和弦练习小程序',
-      path: '/page/home/home'
-    };
+    return sharePrompt.getShareAppMessageReturn();
   },
 
   /**
    * 分享到朋友圈
    */
   onShareTimeline() {
-    // 标记待发放奖励（返回时发放）
     playCount.markPendingBonus();
 
     return {

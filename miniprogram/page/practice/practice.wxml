@@ -19,7 +19,7 @@
 
   <!-- 3. 答题选项 2×2 -->
   <view class="options-grid">
-    <view wx:for="{{options}}" wx:key="index" class="option-card {{flashingIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" hover-class="{{pageState === 'playing' ? '' : 'option-card--hover'}}" hover-stay-time="100" data-chord="{{item}}" data-index="{{index}}" bindtap="onOptionSelect">
+    <view wx:for="{{options}}" wx:key="index" class="option-card {{flashingIndex === index ? 'option-card--selected' : ''}} {{pageState === 'correct' && item === correctAnswer ? 'option-card--correct' : ''}}" hover-class="{{pageState === 'correct' ? '' : 'option-card--hover'}}" hover-stay-time="100" data-chord="{{item}}" data-index="{{index}}" bindtap="onOptionSelect">
       <rich-text class="option-text" nodes="{{chordFmt.getNodes(item)}}"></rich-text>
     </view>
   </view>
@@ -47,3 +47,12 @@
     </block>
   </view>
 </view>
+
+<share-modal
+  show="{{showShareModal}}"
+  title="{{shareModalTitle}}"
+  message="{{shareModalMessage}}"
+  cancel-text="{{shareModalCancelText}}"
+  bind:cancel="onShareModalCancel"
+  bind:share="onShareModalShare"
+/>

@@ -1,0 +1,14 @@
+<view class="share-overlay {{show ? 'share-overlay--show' : ''}}" bindtap="onBackdropTap">
+  <view class="share-content" catchtap="">
+    <view class="share-header">
+      <text class="share-title">{{title}}</text>
+    </view>
+    <view class="share-body">
+      <text class="share-message">{{message}}</text>
+    </view>
+    <view class="share-footer">
+      <view class="share-cancel" bindtap="onCancelTap">{{cancelText}}</view>
+      <button class="share-btn" open-type="share" bindtap="onShareTap">{{shareText}}</button>
+    </view>
+  </view>
+</view>

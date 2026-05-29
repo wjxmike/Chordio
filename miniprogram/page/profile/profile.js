@@ -5,9 +5,11 @@
 const MONTHS_CN = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
 const MONTHS_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const playCount = require('../../utils/play-count');
+const changelog = require('../../data/changelog');
 
 Page({
   data: {
+    versionLabel: 'v' + changelog.getCurrentVersion() + ' Beta',
     userInfo: {
       avatarUrl: '/assets/images/default-avatar.svg',
       nickName: '音乐爱好者'

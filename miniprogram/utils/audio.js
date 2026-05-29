@@ -1,9 +1,10 @@
 /**
  * Chord Hero - 钢琴音频播放模块
- * 使用 Web Audio API + wx.cloud.downloadFile 实现低延迟播放
+ * 使用 Web Audio API + 远程采样（CDN 或云存储）实现低延迟播放
  */
 
 const { getChordFrequencies, ROOT_FREQUENCIES } = require('./chords');
+const { loadAssetArrayBuffer, ensureAssetsReady } = require('../config/assets');
 
 // 半音顺序（降号命名）
 const SEMITONE_ORDER = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -38,14 +39,33 @@ let loadPromise = null;
 // 当前播放的 source 节点（用于停止）
 const activeSources = [];
 
-// 云存储基础路径
-const CLOUD_BASE = 'cloud://cloudbase-3gk50z3ibc7a8b9f.636c-cloudbase-3gk50z3ibc7a8b9f-1391793431/piano';
+function getSampleAssetPath(noteName, octave) {
+  return `piano/${noteName}${octave}.m4a`;
+}
 
-/**
- * 获取音频文件云存储路径
- */
-function getSampleUrl(noteName, octave) {
-  return `${CLOUD_BASE}/${noteName}${octave}.m4a`;
+/** 限制并发，避免同时大量下载导致失败 */
+function runWithConcurrency(taskFns, limit) {
+  return new Promise((resolve) => {
+    let index = 0;
+    let active = 0;
+
+    function next() {
+      if (index >= taskFns.length && active === 0) {
+        resolve();
+        return;
+      }
+      while (active < limit && index < taskFns.length) {
+        const fn = taskFns[index++];
+        active++;
+        Promise.resolve(fn()).finally(() => {
+          active--;
+          next();
+        });
+      }
+    }
+
+    next();
+  });
 }
 
 /**
@@ -84,39 +104,24 @@ function ensureAudioResumed() {
 }
 
 /**
- * 加载单个音频采样（使用 wx.cloud.downloadFile）
+ * 加载单个音频采样
  */
 function loadSample(noteName, octave) {
   const key = `${noteName}${octave}`;
-  const cloudPath = getSampleUrl(noteName, octave);
+  const assetPath = getSampleAssetPath(noteName, octave);
 
-  console.log(`[loadSample] Start: ${key}`);
+  console.log(`[loadSample] Start: ${key}`, assetPath);
 
   return new Promise((resolve) => {
-    // 使用 wx.cloud.downloadFile 下载（不受域名白名单限制）
-    wx.cloud.downloadFile({
-      fileID: cloudPath,
-      success: (res) => {
-        console.log(`[loadSample] Download success: ${key}, tempPath: ${res.tempFilePath}`);
-
-        // 读取文件为 ArrayBuffer
-        wx.getFileSystemManager().readFile({
-          filePath: res.tempFilePath,
-          success: (fileRes) => {
-            console.log(`[loadSample] Read success: ${key}, size: ${fileRes.data.byteLength}`);
-            decodeAndCache(key, fileRes.data, resolve);
-          },
-          fail: (err) => {
-            console.warn(`[loadSample] Read failed: ${key}`, err);
-            resolve();
-          }
-        });
-      },
-      fail: (err) => {
-        console.warn(`[loadSample] Download failed: ${key}`, err);
+    loadAssetArrayBuffer(assetPath)
+      .then((data) => {
+        console.log(`[loadSample] Loaded: ${key}, size: ${data.byteLength}`);
+        decodeAndCache(key, data, resolve);
+      })
+      .catch((err) => {
+        console.warn(`[loadSample] Failed: ${key}`, assetPath, err);
         resolve();
-      }
-    });
+      });
   });
 }
 
@@ -148,16 +153,15 @@ async function preloadSamples() {
   const notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
   const octaves = [2, 3, 4, 5];
 
-  const loadPromises = [];
-
+  const tasks = [];
   octaves.forEach(octave => {
     notes.forEach(note => {
       if (octave === 5 && note !== 'C') return;
-      loadPromises.push(loadSample(note, octave));
+      tasks.push(() => loadSample(note, octave));
     });
   });
 
-  loadPromise = Promise.all(loadPromises).then(() => {
+  loadPromise = runWithConcurrency(tasks, 4).then(() => {
     samplesLoaded = true;
     console.log('Piano samples loaded:', Object.keys(sampleBuffers).length);
   });
@@ -477,19 +481,7 @@ function getRootFrequency(rootNote) {
  */
 function initPiano() {
   initAudio();
-
-  // 初始化云开发
-  if (wx.cloud) {
-    wx.cloud.init({
-      env: 'cloudbase-3gk50z3ibc7a8b9f',
-      traceUser: true
-    });
-    console.log('[initPiano] Cloud initialized');
-  } else {
-    console.warn('[initPiano] wx.cloud not available');
-  }
-
-  return preloadSamples();
+  return ensureAssetsReady().then(() => preloadSamples());
 }
 
 module.exports = {
