@@ -15,6 +15,50 @@ const ASSET_PROVIDER = 'cdn';
 // 固定到含 Logic Bounces 片段的提交；更新资源后改 commit 或等 @main 缓存刷新
 const CDN_BASE = 'https://cdn.jsdelivr.net/gh/wjxmike/chordio-assets@2829207';
 
+const PIANO_CACHE_DIR = `${wx.env.USER_DATA_PATH}/piano-samples`;
+const fs = wx.getFileSystemManager();
+
+function ensurePianoCacheDir() {
+  try {
+    fs.mkdirSync(PIANO_CACHE_DIR, true);
+  } catch (e) {
+    // 目录已存在
+  }
+}
+
+function pianoCachePath(relativePath) {
+  const safe = normalizePath(relativePath).replace(/\//g, '__');
+  return `${PIANO_CACHE_DIR}/${safe}`;
+}
+
+function readFileAsArrayBuffer(filePath) {
+  return new Promise((resolve, reject) => {
+    fs.readFile({
+      filePath,
+      success: (res) => resolve(res.data),
+      fail: reject
+    });
+  });
+}
+
+function requestArrayBuffer(url) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url,
+      method: 'GET',
+      responseType: 'arraybuffer',
+      success: (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data) {
+          resolve(res.data);
+          return;
+        }
+        reject(new Error(`[assets] HTTP ${res.statusCode}: ${url}`));
+      },
+      fail: reject
+    });
+  });
+}
+
 function normalizePath(relativePath) {
   return relativePath.replace(/^\//, '');
 }
@@ -92,7 +136,7 @@ function downloadAsset(relativePath) {
 
 /**
  * 加载资源为 ArrayBuffer（Web Audio 解码用）
- * CDN：wx.request，避免 http://tmp 路径无法 readFile
+ * CDN：优先 downloadFile 到本地缓存（与歌曲相同域名规则，真机只需 downloadFile 合法域名）
  * 云存储：downloadFile + readFile
  */
 function loadAssetArrayBuffer(relativePath) {
@@ -100,35 +144,48 @@ function loadAssetArrayBuffer(relativePath) {
 
   if (ASSET_PROVIDER === 'cloud') {
     const { getCloudFileId } = require('./cloud');
-    return downloadCloudFile(getCloudFileId(path)).then((tempFilePath) => new Promise((resolve, reject) => {
-      wx.getFileSystemManager().readFile({
-        filePath: tempFilePath,
-        success: (res) => resolve(res.data),
-        fail: reject
-      });
-    }));
+    return downloadCloudFile(getCloudFileId(path)).then((tempFilePath) => readFileAsArrayBuffer(tempFilePath));
   }
 
   const url = `${CDN_BASE}/${path}`;
+  ensurePianoCacheDir();
+  const localPath = pianoCachePath(path);
+
+  let cached = false;
+  try {
+    fs.accessSync(localPath);
+    cached = true;
+  } catch (e) {
+    cached = false;
+  }
+
+  if (cached) {
+    return readFileAsArrayBuffer(localPath);
+  }
+
   return new Promise((resolve, reject) => {
-    wx.request({
+    wx.downloadFile({
       url,
-      method: 'GET',
-      responseType: 'arraybuffer',
+      filePath: localPath,
       success: (res) => {
-        if (res.statusCode >= 200 && res.statusCode < 300 && res.data) {
-          resolve(res.data);
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          readFileAsArrayBuffer(res.filePath || localPath).then(resolve).catch(reject);
           return;
         }
-        reject(new Error(`[assets] HTTP ${res.statusCode}: ${url}`));
+        requestArrayBuffer(url).then(resolve).catch(reject);
       },
       fail: (err) => {
-        console.error(
-          '[assets] CDN 请求失败，请确认 request 合法域名含 cdn.jsdelivr.net：',
-          url,
-          err
-        );
-        reject(err);
+        console.warn('[assets] downloadFile failed, fallback to request:', path, err);
+        requestArrayBuffer(url)
+          .then(resolve)
+          .catch((reqErr) => {
+            console.error(
+              '[assets] CDN 加载失败，请确认 downloadFile 合法域名含 cdn.jsdelivr.net：',
+              url,
+              reqErr
+            );
+            reject(reqErr);
+          });
       }
     });
   });

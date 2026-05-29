@@ -85,13 +85,11 @@ Page({
     this.setData({ selectedMode: null, remainingCount });
 
     // 检查待发放的分享奖励
-    const bonus = playCount.checkAndGrantPendingBonus();
-    if (bonus > 0) {
-      // 延迟一下再显示，让页面先稳定
+    sharePrompt.grantPendingShareBonus((bonus) => {
       setTimeout(() => {
         this.showBonusToast(bonus);
       }, 300);
-    }
+    });
 
     if (!this.data.showSplash) {
       songSession.prepareNextSessionAndPrefetchFirst();

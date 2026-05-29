@@ -58,8 +58,16 @@ Page({
   },
 
   onShow() {
-    // 每次显示时检查解锁状态
     this.checkUnlocked();
+    sharePrompt.grantPendingShareBonus((bonus) => {
+      setTimeout(() => {
+        wx.showToast({
+          title: `+${bonus} 能量`,
+          icon: 'none',
+          duration: 2000
+        });
+      }, 300);
+    });
   },
 
   /**

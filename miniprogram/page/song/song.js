@@ -110,10 +110,7 @@ Page({
     songSession.scheduleSessionDownloads(this._shuffledQuestions, 0);
     this.generateQuestion();
 
-    // 钢琴采样延后，避免与首题音频抢带宽（App 启动时也会加载）
-    setTimeout(() => {
-      audio.initPiano();
-    }, 1500);
+    audio.initPiano();
 
     wx.loadFontFace({
       family: 'Protest Strike',

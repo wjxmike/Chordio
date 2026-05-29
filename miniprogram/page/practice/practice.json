@@ -3,6 +3,7 @@
   "navigationBarBackgroundColor": "#1C1C1C",
   "navigationBarTextStyle": "white",
   "backgroundColor": "#1C1C1C",
+  "disableSwipeBack": true,
   "usingComponents": {
     "share-modal": "/components/share-modal/share-modal"
   }

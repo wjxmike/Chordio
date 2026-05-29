@@ -82,25 +82,36 @@ function getAudioContext() {
 }
 
 /**
+ * 在用户手势回调内同步尝试恢复 AudioContext，再执行播放
+ */
+function resumeAndRun(fn) {
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
+  fn();
+}
+
+/**
  * 确保音频已激活（用于移动端，需要在用户交互后调用）
  */
 function ensureAudioResumed() {
-  // 确保 audioCtx 已创建
   if (!audioCtx) {
     audioCtx = wx.createWebAudioContext();
-    console.log('[Audio] AudioContext created');
   }
-
-  // 尝试激活
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume().then(() => {
-      console.log('[Audio] AudioContext resumed, state:', audioCtx.state);
-    }).catch(err => {
-      console.warn('[Audio] Resume failed:', err);
-    });
-  } else {
-    console.log('[Audio] AudioContext state:', audioCtx.state);
+    audioCtx.resume();
   }
+}
+
+function whenSamplesReady() {
+  if (samplesLoaded) {
+    return Promise.resolve();
+  }
+  if (loadPromise) {
+    return loadPromise;
+  }
+  return preloadSamples();
 }
 
 /**
@@ -207,10 +218,7 @@ function playNote(noteKey, volume = 0.6, startTime = 0) {
 
   const ctx = getAudioContext();
 
-  // 处理音频上下文激活
   const playSound = () => {
-    console.log(`[playNote] Playing: ${noteKey}, ctx state: ${ctx.state}`);
-
     const source = ctx.createBufferSource();
     const gainNode = ctx.createGain();
 
@@ -233,19 +241,8 @@ function playNote(noteKey, volume = 0.6, startTime = 0) {
     return source;
   };
 
-  // 如果上下文被暂停，先恢复再播放
-  if (ctx.state === 'suspended') {
-    console.log('[playNote] Context suspended, resuming...');
-    ctx.resume().then(() => {
-      console.log('[playNote] Context resumed, now playing');
-      playSound();
-    }).catch(err => {
-      console.warn('[playNote] Resume failed:', err);
-    });
-    return null;
-  } else {
-    return playSound();
-  }
+  resumeAndRun(playSound);
+  return null;
 }
 
 /**
@@ -355,13 +352,12 @@ function playRootNote(ctx, frequency, duration = 2.0) {
  */
 function playProgression(ctx, progression, rootNote, level = 'triads') {
   stopCurrentPlayback();
+  ensureAudioResumed();
 
   const CHORD_INTERVAL = 1.2;
   const actualCtx = getAudioContext();
 
   const scheduleNotes = () => {
-    console.log('[playProgression] Scheduling notes, ctx state:', actualCtx.state);
-
     progression.forEach((chordSymbol, index) => {
       const startTime = index * CHORD_INTERVAL;
       const frequencies = getChordFrequencies(rootNote, chordSymbol, level);
@@ -371,7 +367,6 @@ function playProgression(ctx, progression, rootNote, level = 'triads') {
         const voicing = getChordVoicing(frequencies, chordRoot);
 
         if (voicing) {
-          // 直接调度，不经过 playNote 的暂停检查
           const playSound = (noteKey, volume, time) => {
             const buffer = sampleBuffers[noteKey];
             if (!buffer) return;
@@ -398,18 +393,9 @@ function playProgression(ctx, progression, rootNote, level = 'triads') {
     });
   };
 
-  // 如果 context 暂停，先恢复再调度
-  if (actualCtx.state === 'suspended') {
-    console.log('[playProgression] Context suspended, resuming...');
-    actualCtx.resume().then(() => {
-      console.log('[playProgression] Context resumed, scheduling...');
-      scheduleNotes();
-    }).catch(err => {
-      console.warn('[playProgression] Resume failed:', err);
-    });
-  } else {
-    scheduleNotes();
-  }
+  whenSamplesReady().then(() => {
+    resumeAndRun(scheduleNotes);
+  });
 
   return progression.length * CHORD_INTERVAL;
 }
@@ -419,54 +405,44 @@ function playProgression(ctx, progression, rootNote, level = 'triads') {
  */
 function playOneChord(ctx, chordSymbol, rootNote, level = 'triads') {
   stopCurrentPlayback();
+  ensureAudioResumed();
+
   const frequencies = getChordFrequencies(rootNote, chordSymbol, level);
+  if (!frequencies) return;
 
-  if (frequencies) {
-    const chordRoot = getChordRoot(rootNote, chordSymbol);
-    const voicing = getChordVoicing(frequencies, chordRoot);
+  const chordRoot = getChordRoot(rootNote, chordSymbol);
+  const voicing = getChordVoicing(frequencies, chordRoot);
+  if (!voicing) return;
 
-    if (voicing) {
-      const actualCtx = getAudioContext();
+  const playChordNow = () => {
+    const actualCtx = getAudioContext();
 
-      const playChordNow = () => {
-        console.log('[playOneChord] Playing, ctx state:', actualCtx.state);
+    const playSound = (noteKey, volume) => {
+      const buffer = sampleBuffers[noteKey];
+      if (!buffer) return;
 
-        const playSound = (noteKey, volume) => {
-          const buffer = sampleBuffers[noteKey];
-          if (!buffer) return;
+      const source = actualCtx.createBufferSource();
+      const gainNode = actualCtx.createGain();
 
-          const source = actualCtx.createBufferSource();
-          const gainNode = actualCtx.createGain();
+      source.buffer = buffer;
+      gainNode.gain.value = volume;
 
-          source.buffer = buffer;
-          gainNode.gain.value = volume;
+      source.connect(gainNode);
+      gainNode.connect(actualCtx.destination);
 
-          source.connect(gainNode);
-          gainNode.connect(actualCtx.destination);
+      source.start(0);
+      activeSources.push(source);
+    };
 
-          source.start(0);
-          activeSources.push(source);
-        };
+    playSound(voicing.bass, 0.5);
+    voicing.chord.forEach(note => {
+      playSound(note, 0.4);
+    });
+  };
 
-        playSound(voicing.bass, 0.5);
-        voicing.chord.forEach(note => {
-          playSound(note, 0.4);
-        });
-      };
-
-      // 如果 context 暂停，先恢复再播放
-      if (actualCtx.state === 'suspended') {
-        console.log('[playOneChord] Context suspended, resuming...');
-        actualCtx.resume().then(() => {
-          playChordNow();
-        }).catch(err => {
-          console.warn('[playOneChord] Resume failed:', err);
-        });
-      } else {
-        playChordNow();
-      }
-    }
-  }
+  whenSamplesReady().then(() => {
+    resumeAndRun(playChordNow);
+  });
 }
 
 /**
@@ -493,5 +469,6 @@ module.exports = {
   stopCurrentPlayback,
   initPiano,
   preloadSamples,
-  ensureAudioResumed
+  ensureAudioResumed,
+  whenSamplesReady
 };

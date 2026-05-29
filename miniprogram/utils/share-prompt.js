@@ -19,8 +19,22 @@ function getShareAppMessageReturn() {
   };
 }
 
+/**
+ * 从分享面板返回当前页时，检查并发放待领取的分享奖励
+ * @param {(bonus: number) => void} [onGranted]
+ * @returns {number} 发放的能量数量，0 表示无待领取
+ */
+function grantPendingShareBonus(onGranted) {
+  const bonus = playCount.checkAndGrantPendingBonus();
+  if (bonus > 0 && typeof onGranted === 'function') {
+    onGranted(bonus);
+  }
+  return bonus;
+}
+
 module.exports = {
   ENERGY_SHARE_ONLY,
   buildEnergyShareMessage,
-  getShareAppMessageReturn
+  getShareAppMessageReturn,
+  grantPendingShareBonus
 };

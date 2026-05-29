@@ -8,6 +8,8 @@ const audio = require('../../utils/audio');
 const playCount = require('../../utils/play-count');
 const sharePrompt = require('../../utils/share-prompt');
 
+audio.initPiano();
+
 // 难度配置
 const DIFFICULTY_CONFIG = {
   // 分数阈值 -> { 时间, 填空数 }

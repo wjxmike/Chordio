@@ -18,8 +18,6 @@ App({
 
     // 优先预下载下次歌曲练习的第一题，钢琴采样稍后加载避免抢带宽
     songSession.prepareNextSessionAndPrefetchFirst();
-    setTimeout(() => {
-      require('./utils/audio').initPiano();
-    }, 600);
+    require('./utils/audio').initPiano();
   }
 });
